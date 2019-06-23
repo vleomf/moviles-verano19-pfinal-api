@@ -76,7 +76,7 @@ class Usuario extends DB
         $pdo = null;
         //  Si el numero de usuarios es mayor a 1 envia lista
         //  de lo contrario solo envia un objeto simple
-        return count($usuarios) > 1 ? $usuarios : $usuarios[0];
+        return $usuarios;
     }
 
     public function Crear($password = null)

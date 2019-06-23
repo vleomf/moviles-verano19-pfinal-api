@@ -42,7 +42,7 @@ if(Filtros::REST_API())
             {
                 try
                 {
-                    echo json_encode($usuario->Obtener($id));
+                    echo json_encode($usuario->Obtener());
                 }
                 catch(Exception $e)
                 {

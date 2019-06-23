@@ -79,6 +79,7 @@ if(Filtros::REST_API())
                 ]);
             }
         break;
+
         //  PATCH /usuarios/$id  (Actualiza un usuario por $id)
         case 'PATCH':
             //  Buscamos el ID en la URI
@@ -121,6 +122,7 @@ if(Filtros::REST_API())
             }
         break;
         
+        //  DELETE /usuarios/$id  (eliminar usuario por $id)
         case 'DELETE':
             //  Buscamos el ID en la URI
             $id = explode('/', $_SERVER['REQUEST_URI'])[2];

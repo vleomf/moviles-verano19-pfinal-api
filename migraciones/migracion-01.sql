@@ -1,3 +1,7 @@
+-- ARCHIVO DE MIGRACION INICIAL
+-- DESDE TERMINAL CORRER EL COMANDO
+-- mysql -u [usuario] -p < migracion-01.sql
+
 DROP DATABASE IF EXISTS `moviles_pf`;
 CREATE DATABASE `moviles_pf`;
 USE `moviles_pf`;

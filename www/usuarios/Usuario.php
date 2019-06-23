@@ -1,7 +1,13 @@
 <?php
-require_once( $_SERVER["DOCUMENT_ROOT"] . '/Filtros.php'); 
-Filtros::ArchivoPrivado();
 require_once( $_SERVER["DOCUMENT_ROOT"] . '/db.php');
+//  Filtro para denegar ejecucion de archivo por cliente.
+//  Solo el servidor puede ejectuar un archivo con este filtro.
+if( count( get_included_files() ) == 2 )
+{
+    http_response_code(401);
+    echo file_get_contents($_SERVER['DOCUMENT_ROOT'] . '/error/401.php');
+    die();
+}
 
 //  Modelo usuario
 class Usuario extends DB

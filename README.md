@@ -29,6 +29,6 @@ POST /usuarios/
 PATH /usuarios/{id}
 ```
 
-\```json
+```json
 DELETE /usuarios/{id}
 ```

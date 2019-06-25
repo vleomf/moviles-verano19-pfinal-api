@@ -3,6 +3,8 @@
 URIs REST
 <hr/>
 
+### Usuarios
+
 ```json
 GET /usuarios/
 ```

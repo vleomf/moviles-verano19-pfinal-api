@@ -23,10 +23,11 @@ class Usuario
         let query  = 'SELECT id, matricula, ap_paterno, ap_materno, nombre,';
             query += 'correo_electronico, fotografia, rol FROM usuarios'; 
 
+        let conn;
         let rows;
         try
         {
-            const conn = await db.Iniciar();
+            conn = await db.Iniciar();
             rows = await conn.query(query);
         }
         catch(e)
@@ -35,6 +36,10 @@ class Usuario
             return [{ error: 'db' }, {
                 mensaje: 'Error al obtener los Usuarios'
             }];
+        }
+        finally
+        {
+            conn.end();
         }
         
         let usuarios = [];
@@ -50,10 +55,11 @@ class Usuario
         let query  = 'SELECT id, matricula, ap_paterno, ap_materno, nombre,';
             query += 'correo_electronico, fotografia, rol FROM usuarios WHERE id = ?';
 
+        let conn;
         let rows;
         try
         {
-            const conn = await db.Iniciar();
+            conn = await db.Iniciar();
             rows = await conn.query(query, [id]);
         }
         catch(e)
@@ -62,6 +68,10 @@ class Usuario
             return [{error: 'db'}, {
                 mensaje: 'Error al obtener Usuario'
             }];
+        }
+        finally
+        {
+            conn.end();
         }
 
         return [{error: false}, rows[0] ? new Usuario(cc(rows[0])) : {}];
@@ -92,11 +102,12 @@ class Usuario
             this.matricula, this.apPaterno,         this.apMaterno, 
             this.nombre,    this.correoElectronico, this.rol, 
             this.password,  this.fotografia
-        ].filter( el => { return el !== undefined ? el : '' });
+        ].filter(Boolean);
 
+        let conn;
         try
         {
-            const conn = await db.Iniciar();
+            conn = await db.Iniciar();
             await conn.query(query, datos);
         }
         catch(e)
@@ -105,6 +116,10 @@ class Usuario
             return [{ error : 'db' }, {
                 mensaje: "Error al crear Usuario"
             }];
+        }
+        finally
+        {
+            conn.end();
         }
 
         this.password = undefined;
@@ -121,6 +136,7 @@ class Usuario
             query += this.correoElectronico ? 'correo_electronico = ?,' : '';
             query += this.rol       ? 'rol = ?,' : '';
             query += this.password  ? 'password = ?,' : '';
+            query += this.fotografia? 'fotografia = ?,' : '';
             query  = query.substring(0, query.length - 1);
             query += ' WHERE id = ?';
 
@@ -128,20 +144,28 @@ class Usuario
         let datos = [
             this.matricula,         this.apPaterno, this.apMaterno, this.nombre,
             this.correoElectronico, this.rol,       this.password,  this.fotografia, id
-        ].filter( el => { return el != undefined ? el : '' });
+        ].filter(Boolean);
 
+        console.log(query, datos);
+
+        let conn;
         try
         {
-            const conn =  await db.Iniciar();
+            conn =  await db.Iniciar();
             await conn.query(query, datos);
         }
         catch(e)
         {
-            // console.log(e);
+            console.log(e);
             return [{error: 'db'}, {
                 mensaje: 'Error al actualizar Usuario'
             }];
         }
+        finally
+        {
+            conn.end();
+        }
+
         this.password = undefined;
         return [{error: false}, this];
     }
@@ -150,9 +174,10 @@ class Usuario
     {
         const query = "DELETE FROM usuarios WHERE id = ?";
 
+        let conn;
         try
         {
-            const conn = await db.Iniciar();
+            conn = await db.Iniciar();
             await conn.query(query, [id]);
         }
         catch(e)
@@ -161,6 +186,10 @@ class Usuario
             return [{error: 'db'}, {
                 mensaje: 'Error al eliminar Usuario'
             }];
+        }
+        finally
+        {
+            conn.end();
         }
         return [{error: false}, {}];
     }

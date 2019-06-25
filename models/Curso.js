@@ -17,10 +17,11 @@ class Curso
     {
         const query  = 'SELECT id, matricula, nombre, inicio, fin FROM cursos';
 
+        let conn;
         let rows;
         try
         {
-            const conn = await db.Iniciar();
+            conn = await db.Iniciar();
             rows = await conn.query(query);
         }
         catch(e)
@@ -29,6 +30,10 @@ class Curso
             return [{error: 'db'}, {
                 mensaje: 'Error al obtener los Cursos'
             }];
+        }
+        finally
+        {
+            conn.end();
         }
 
         let cursos = [];
@@ -44,10 +49,11 @@ class Curso
         let query  = "SELECT id, matricula, nombre, inicio, fin FROM cursos";
             query += " WHERE id = ?";
         
+        let conn;
         let rows;
         try
         {
-            const conn = await db.Iniciar();
+            conn = await db.Iniciar();
             rows = await conn.query(query, [id]);           
         }
         catch(e)
@@ -56,6 +62,10 @@ class Curso
             return [{error: 'db'}, {
                 mensaje: 'Error al obtener Curso'                
             }];
+        }
+        finally
+        {
+            conn.end();
         }
 
         return [{error: false}, rows[0] ? new Curso(cc(rows[0])) : {}];
@@ -73,9 +83,10 @@ class Curso
         let query = 'INSERT INTO cursos SET matricula = ?, nombre = ?, inicio = ?, fin = ?';
         let datos = [ this.matricula, this.nombre, this.inicio, this.fin ];
 
+        let conn;
         try
         {
-            const conn = await db.Iniciar()
+            conn = await db.Iniciar()
             await conn.query(query, datos);
         }
         catch(e)
@@ -85,18 +96,30 @@ class Curso
                 mensaje: 'Error al crear Curso'
             }];
         }
+        finally
+        {
+            conn.end();
+        }
 
         return [{error: false}, this];
     }   
 
     async Actualizar(id)
     {
-        let query = 'UPDATE cursos SET matricula = ?, nombre = ?, inicio = ?, fin = ? WHERE id = ?';
-        let datos = [ this.matricula, this.nombre, this.inicio, this.fin, id ];
+        let query  = 'UPDATE cursos SET ';
+            query += this.matricula ? 'matricula = ?,' : '';
+            query += this.nombre    ? 'nombre    = ?,' : '';
+            query += this.inicio    ? 'inicio    = ?,' : '';
+            query += this.fin       ? 'fin       = ?,' : '';
+            query  = query.substring(0, query.length - 1);
+            query += ' WHERE id = ?';
         
+        let datos = [ this.matricula, this.nombre, this.inicio, this.fin, id ].filter(Boolean);
+        
+        let conn;
         try
         {
-            const conn =  await db.Iniciar();
+            conn =  await db.Iniciar();
             await conn.query(query, datos);
         }
         catch(e)
@@ -106,6 +129,10 @@ class Curso
                 mensaje: 'Error al actualizar Curso'
             }];
         }
+        finally
+        {
+            conn.end();
+        }
 
         return [{error: false}, this];
     }
@@ -114,9 +141,10 @@ class Curso
     {
         const query = 'DELETE FROM cursos WHERE id = ?';
 
+        let conn;
         try
         {
-            const conn = await db.Iniciar();
+            conn = await db.Iniciar();
             await conn.query(query, [id]);
         }
         catch(e)
@@ -125,6 +153,10 @@ class Curso
             return [{error: 'db'}, {
                 mensaje: 'Error al eliminar Curso'
             }];
+        }
+        finally
+        {
+            conn.end();
         }
 
         return[{error: false}, {}];

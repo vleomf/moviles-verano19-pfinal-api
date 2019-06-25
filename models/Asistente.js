@@ -11,14 +11,14 @@ class Asistente
         this.curso = a.curso;
     }
 
-    async ObtenerTodos()
+    async ObtenerTodos(idCurso)
     {
-        const query = 'SELECT id, usuario, curso FROM asistentes';
+        const query = 'SELECT id, usuario, curso FROM asistentes WHERE curso = ?';
         let conn, rows;
         try
         {
             conn = await db.Iniciar();
-            rows = await conn.query(query);
+            rows = await conn.query(query, [idCurso]);
         }
         catch(e)
         {
@@ -36,14 +36,15 @@ class Asistente
         return [false, asistentes];
     }
 
-    async Obtener(id)
+    async Obtener(idAsistente, idCurso)
     {
-        const query = 'SELECT id, usuario, curso FROM asistentes WHERE id = ?';
+        let query  = 'SELECT id, usuario, curso FROM asistentes WHERE id = ?';
+            query += 'AND curso = ?';
         let conn, rows;
         try
         {
             conn = await db.Iniciar();
-            rows = await conn.query(query, [id]);
+            rows = await conn.query(query, [idAsistente, idCurso]);
         }
         catch(e)
         {

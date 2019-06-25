@@ -67,7 +67,6 @@ class Curso
         {
             conn.end();
         }
-
         return [{error: false}, rows[0] ? new Curso(cc(rows[0])) : {}];
     }
 

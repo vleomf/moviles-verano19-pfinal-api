@@ -4,20 +4,16 @@ const Usuario = require('../models/Usuario');
 
 /* GET users listing. */
 router.get('/', async (req, res) => {
-  let usuario = new Usuario();
-
-  [error, usuario] = await usuario.ObtenerTodos();
-  //  NOTA: Aqui al regresar el error deberia recibir un objeto con
-  //  todo lo relacionado al error, el segundo parametro del array
-  //  se reservaria SOLAMENTE para el retorno de la informacion de usuario.
-  if(error[0] === 'N' || error[0] === 'E')
+  [error, usuario] = await Usuario.ObtenerTodos();
+  if(error)
   {
     res.statusCode = 500;
     return res.json({
-      error:{
-        codigo: error,
-        objetivo: 'GET /usuarios',
-        cuerpo: req.body
+      error: {
+        codigo: error.codigo,
+        objetivo: `${req.method} ${req.baseUrl}`,
+        cuerpo: req.body,
+        ofensa: error.ofensa
       }
     });
   }
@@ -26,17 +22,21 @@ router.get('/', async (req, res) => {
 });
 
 router.get('/:id', async(req, res) => {
-  let usuario = new Usuario();
-
-  [error, usuario] = await usuario.Obtener(req.params.id);
-  if(error[0] === 'N' || error[0] === 'E')
+  [error, usuario] = await Usuario.Obtener(req.params.id);
+  if(error)
   {
-    res.statusCode = 500;
+    switch(error.tipo)
+    {
+      case 'U' : res.statusCode = 404; break;
+      case 'E' : res.statusCode = 500; break;
+      case 'N' : res.statusCode = 500; break;
+    }
     return res.json({
-      error:{
-        codigo: error,
-        objetivo: `GET /usuarios/${req.params.id}`,
-        cuerpo: req.body
+      error: {
+        codigo: error.codigo,
+        objetivo: `${req.method} ${req.baseUrl}`,
+        cuerpo: req.body,
+        ofensa: error.ofensa
       }
     });
   }
@@ -46,79 +46,124 @@ router.get('/:id', async(req, res) => {
 router.post('/', async (req, res) => {
   let usuario = new Usuario(req.body);
 
-  [error, usuario] = await usuario.Crear();
-  if(error[0] === 'N' || error[0] === 'E')
+  error = await usuario.Crear();
+  if(error)
   {
-    res.statusCode = 500;
+    switch(error.tipo)
+    {
+      case 'U' : 
+        res.statusCode = 400; 
+        break;
+      case 'E' : 
+      case 'N' :
+        res.statusCode = 500;
+        break;
+    }
     return res.json({
-      error:{
-        codigo: error,
-        objetivo: 'POST /usuarios',
-        cuerpo: req.body
+      error: {
+        codigo: error.codigo,
+        objetivo: `${req.method} ${req.baseUrl}`,
+        cuerpo: req.body,
+        ofensa: error.ofensa
       }
     });
   }
-  if(error[0] === 'U')
-  {
-    res.statusCode = 400;
-    return res.json({
-      error:{
-        codigo: error,
-        objetivo: 'POST /usuarios',
-        cuerpo: req.body,
-      },
-      validacion: usuario
-    })
-  }
-  res.statusCode = 201;
+
+  //  Ocultamos estos datos al publico
+  usuario.password   = undefined;
+  usuario.fotografia = undefined;
+  
+  res.statusCode = 201;  
   return res.send(usuario);
 });
 
 router.patch('/:id', async(req, res) =>{
-  let usuario = new Usuario(req.body);
-  
-  [error, usuario] = await usuario.Actualizar(req.params.id);
-  if(error[0] === 'N' || error[0] === 'E')
+  let datosUs = req.body;
+
+  [error, usuario] = await Usuario.Obtener(req.params.id);
+  if(error)
   {
     res.statusCode = 500;
     return res.json({
-      error:{
-        codigo: error,
-        objetivo: `PATCH /usuarios/${req.params.id}`,
-        cuerpo: req.body
+      error: {
+        codigo: error.codigo,
+        objetivo: `${req.method} ${req.baseUrl}`,
+        cuerpo: req.body,
+        ofensa: error.ofensa
       }
     })
   }
-  if(error[0] === 'U')
+  
+  usuario.matricula  = datosUs.matricula;
+  usuario.apPaterno  = datosUs.apPaterno;
+  usuario.apMaterno  = datosUs.apMaterno;
+  usuario.nombre     = datosUs.nombre;
+  usuario.rol        = datosUs.rol;
+  usuario.password   = datosUs.password;
+  usuario.fotografia = datosUs.fotografia;
+  usuario.correoElectronico = datosUs.correoElectronico;
+  
+  error = await usuario.Actualizar();
+  if(error)
   {
-    res.statusCode = 400;
+    switch(error.tipo)
+    {
+      case 'U':
+        res.statusCode = 400;
+        break;
+      default:
+        res.statusCode = 500;
+    }
     return res.json({
-      error:{
-        codigo: error,
-        objetivo: `PATCH /usuarios/${req.params.id}`,
-        cuerpo: req.body
-      },
-      validacion: usuario
-    });
+      error: {
+        codigo: error.codigo,
+        objetivo: `${req.method} ${req.baseUrl}`,
+        cuerpo: req.body,
+        ofensa: error.ofensa
+      }
+    })
   }
 
+  //  Ocultamos estos datos al publico
+  usuario.password   = undefined;
+  usuario.fotografia = undefined;
+  
   return res.send(usuario);
 });
 
 router.delete('/:id', async(req, res) => {
-  let usuario = new Usuario();
+  [error, usuario] = await Usuario.Obtener(req.params.id);
+  if(error)
+  {
+    switch(error.tipo)
+    {
+      case 'U' : res.statusCode = 404; break;
+      case 'E' : case 'N' :
+        res.statusCode = 500; 
+        break;
+    }
+    return res.json({
+      error: {
+        codigo: error.codigo,
+        objetivo: `${req.method} ${req.baseUrl}`,
+        cuerpo: req.body,
+        ofensa: error.ofensa
+      }
+    });
+  }
 
-  [error, usuario] = await usuario.Eliminar(req.params.id);
-  if(error[0] === 'N' || error[0] === 'E')
+  error = await usuario.Eliminar();
+  if(error)
   {
     res.statusCode = 500;
     return res.json({
-      error:{
-        codigo: error,
-        objetivo: `DELETE /usuarios/${req.params.id}`,
-        cuerpo: req.body
+      error: {
+        codigo: error.codigo,
+        objetivo: `${req.method} ${req.baseUrl}`,
+        cuerpo: req.body,
+        ofensa: error.ofensa
       }
-    })
+    });
   }
 
   return res.send(usuario);

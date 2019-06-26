@@ -18,13 +18,12 @@ class Usuario
         this.fotografia        = u.fotografia;
     }
 
-    async ObtenerTodos()
+    static async ObtenerTodos()
     {
         let query  = 'SELECT id, matricula, ap_paterno, ap_materno, nombre,';
             query += 'correo_electronico, fotografia, rol FROM usuarios'; 
 
-        let conn;
-        let rows;
+        let conn, rows;
         try
         {
             conn = await db.Iniciar();
@@ -34,11 +33,16 @@ class Usuario
         {
             switch(e.code)
             {
-                //  NOTA: Creo deberia regresar el mensaje de error junto con el codigo.
-                //  El segundo valor enviado en el arreglo deberia reservarse solo para 
-                //  la informacion que regresa el metodo del modelo y NADA MAS.
-                case 'ECONNREFUSED' : return ['N-1000', {}];
-                default             : return ['E-1000', {}];
+                case 'ECONNREFUSED' : return [{
+                    codigo: 'N-1000',
+                    tipo  : 'N',
+                    ofensa: false
+                }, null];
+                default             : return [{
+                    codigo: 'E-1000',
+                    tipo  : 'E',
+                    ofensa: false
+                }, null];
             }
         }
         finally
@@ -54,24 +58,28 @@ class Usuario
         return [false , usuarios];
     }
 
-    async Obtener(id)
+    static async Obtener(id)
     {
         let query  = 'SELECT id, matricula, ap_paterno, ap_materno, nombre,';
             query += 'correo_electronico, fotografia, rol FROM usuarios WHERE id = ?';
 
-        let conn;
-        let rows;
+        let conn, rows;
         try
         {
             conn = await db.Iniciar();
             rows = await conn.query(query, [id]);
+            if(!rows.length) return [{
+                codigo: 'U-1000',
+                tipo:   'U',
+                ofensa: false
+            }, null];
         }
         catch(e)
         {
             switch(e.code)
             {
-                case 'ECONNREFUSED' : return ['N-1000', {}];
-                default             : return ['E-1000', {}];
+                case 'ECONNREFUSED' : return ['N-1000', null];
+                default             : return ['E-1000', null];
             }
         }
         finally
@@ -79,22 +87,27 @@ class Usuario
             if(conn) conn.end();
         }
 
-        return [false , rows[0] ? new Usuario(cc(rows[0])) : {}];
+        return [false , new Usuario(cc(rows[0])) ];
     }
 
     async Crear()
     {
         if( !this.matricula || !this.apPaterno || !this.apMaterno || !this.nombre ||
-            !this.correoElectronico || !this.rol ) return ['U-1000', {
-                matricula: this.matricula ? 'ok' : 'requerido',
-                apPaterno: this.apPaterno ? 'ok' : 'requerido',
-                apMaterno: this.apMaterno ? 'ok' : 'requerido',
-                nombre:    this.nombre    ? 'ok' : 'requerido',
-                correoElectronico : this.correoElectronico ? 'ok' : 'requerido',
-                fotografia: this.fotografia ? 'ok' : 'opcional',
-                rol: this.rol ? 'ok' : 'requerido < estudiante | profesor >',
-                password: this.password ? 'ok' : 'opcional'
-            }];
+            !this.correoElectronico || !this.rol ) return {
+                codigo: 'U-1000',
+                tipo:   'U',
+                ofensa: {
+                    requeridos: {
+                        matricula: this.matricula ? true : false,
+                        apPaterno: this.apPaterno ? true : false,
+                        apMaterno: this.apMaterno ? true : false,
+                        nombre   : this.nombre    ? true : false,
+                        correoElectronico : this.correoElectronico ? true : false,
+                        rol: this.rol ? true : false
+                    },
+                    opcionales: ['fotografia', 'password']
+                }
+            };
 
         let query  = 'INSERT INTO usuarios SET matricula = ?, ap_paterno = ?, ap_materno = ?,';
             query += 'nombre = ?, correo_electronico = ?, rol = ?,';
@@ -119,20 +132,26 @@ class Usuario
         {
             switch(e.code)
             {
-                case 'ECONNREFUSED' : return ['N-1000', {}];
-                default             : return ['E-1000', {}];
+                case 'ECONNREFUSED' : return {
+                    codigo: 'N-1000',
+                    tipo:   'N',
+                    ofensa: false
+                };
+                default: return {
+                    codigo: 'E-1000',
+                    tipo:   'E',
+                    ofensa: false
+                };
             }
         }
         finally
         {
             if(conn) conn.end();
         }
-
-        this.password = undefined;
-        return [false, this];
+        return false;
     }
 
-    async Actualizar(id)
+    async Actualizar()
     {
         let query  = 'UPDATE usuarios SET ';
             query += this.matricula ? 'matricula = ?,' : '';
@@ -145,43 +164,68 @@ class Usuario
             query += this.fotografia? 'fotografia = ?,' : '';
             query  = query.substring(0, query.length - 1);
             query += ' WHERE id = ?';
+            
+        let query2  = 'SELECT id, matricula, ap_paterno, ap_materno, nombre, ';
+            query2 += 'correo_electronico, rol, password, fotografia FROM usuarios';
+            query2 += ' WHERE id = ?';
 
         this.EncriptarPassword();
         let datos = [
             this.matricula,         this.apPaterno, this.apMaterno, this.nombre,
             this.correoElectronico, this.rol,       this.password,  this.fotografia].filter(Boolean);
 
-        if(!datos.length) return ['U-1000', {
-            enviados: 0,
-            disponibles: Object.keys(this).filter(el => { return el != 'id' ? el : undefined })
-        }];
+        if(!datos.length) return {
+            codigo: 'U-1000',
+            tipo:   'U',
+            ofensa: {
+                enviados: 0,
+                disponibles: Object.keys(this).filter(el => { return el != 'id' ? el : undefined })
+            }
+        };
 
-        datos.push(id);
+        datos.push(this.id); // primer  query
         
         let conn;
         try
         {
             conn =  await db.Iniciar();
             await conn.query(query, datos);
+
+            const datosActualizados = await conn.query(query2, this.id);
+            this.matricula  = datosActualizados[0]['matricula'];
+            this.apPaterno  = datosActualizados[0]['ap_paterno'];
+            this.apMaterno  = datosActualizados[0]['ap_materno'];
+            this.nombre     = datosActualizados[0]['nombre'];
+            this.rol        = datosActualizados[0]['rol'];
+            this.password   = datosActualizados[0]['password'];
+            this.fotografia = datosActualizados[0]['fotografia'];
+            this.correoElectronico = datosActualizados[0]['correo_electronico'];
         }
         catch(e)
         {
+            console.log(e);
             switch(e.code)
             {
-                case 'ECONNREFUSED' : return ['N-1000', {}];
-                default             : return ['E-1000', {}];
+                case 'ECONNREFUSED' : return {
+                    codigo: 'N-1000',
+                    tipo:   'N',
+                    ofensa:  false
+                };
+                default : return {
+                    codigo: 'E-1000',
+                    tipo:   'E',
+                    ofensa: false
+                };
             }
         }
         finally
         {
             if(conn) conn.end();
         }
-
-        this.password = undefined;
-        return [false, this];
+        return false;
     }
 
-    async Eliminar(id)
+    async Eliminar()
     {
         const query = "DELETE FROM usuarios WHERE id = ?";
 
@@ -189,21 +233,30 @@ class Usuario
         try
         {
             conn = await db.Iniciar();
-            await conn.query(query, [id]);
+            await conn.query(query, [this.id]);
         }
         catch(e)
         {
+            console.log(e);
             switch(e.code)
             {
-                case 'ECONNREFUSED' : return ['N-1000', {}];
-                default             : return ['E-1000', {}];
+                case 'ECONNREFUSED' : return {
+                    codigo: 'N-1000',
+                    tipo:   'N',
+                    ofensa: false
+                }
+                default : return {
+                    codigo: 'E-1000',
+                    tipo:   'E',
+                    ofensa: false
+                }
             }
         }
         finally
         {
             if(conn) conn.end();
         }
-        return [false, {}];
+        return false;
     }
 
     async EncriptarPassword()

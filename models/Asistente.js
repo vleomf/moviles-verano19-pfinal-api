@@ -22,12 +22,15 @@ class Asistente
         }
         catch(e)
         {
-            // console.log(e);
-            return ['db', []];
+            switch(e.code)
+            {
+                case 'ECONNREFUSED' : return ['N-1000', {}];
+                default             : return ['E-1000', {}];
+            }
         }
         finally
         {
-            conn.end();
+            if(conn) conn.end();
         }
         let asistentes = [];
         rows.forEach( row => {
@@ -48,19 +51,22 @@ class Asistente
         }
         catch(e)
         {
-            // console.log(e);
-            return ['db', {}];
+            switch(e.code)
+            {
+                case 'ECONNREFUSED' : return ['N-1000', {}];
+                default             : return ['E-1000', {}];
+            }
         }
         finally
         {
-            conn.end();
+            if(conn) conn.end();
         }
         return [false, rows[0] ? new Asistente(cc(rows[0])) : {}];
     }
 
     async Crear()
     {
-        if(!this.usuario || !this.curso) return ['usr', {
+        if(!this.usuario || !this.curso) return ['U-1000', {
             usuario: this.usuario ? 'ok' : 'requerido',
             curso  : this.curso   ? 'ok' : 'requerido'
         }];
@@ -75,12 +81,15 @@ class Asistente
         }
         catch(e)
         {
-            // console.log(e);
-            return ['db', {}];
+            switch(e.code)
+            {
+                case 'ECONNREFUSED' : return ['N-1000', {}];
+                default             : return ['E-1000', {}];
+            }
         }
         finally
         {
-            conn.end();
+            if(conn) conn.end();
         }
         return [false, this];
     }
@@ -94,6 +103,12 @@ class Asistente
             query += ' WHERE id = ?';
 
         let datos = [this.usuario, this.curso].filter(Boolean);
+        if(!datos.length) return ['U-1000', {
+            enviados: 0,
+            disponibles: Object.keys(this).filter( el => { return el != 'id' ? el : undefined })
+        }];
+        datos.push(id);
+        
         let conn;
         try
         {
@@ -102,12 +117,15 @@ class Asistente
         }
         catch(e)
         {
-            // console.log(e);
-            return ['db', {}];
+            switch(e.code)
+            {
+                case 'ECONNREFUSED' : return ['N-1000', {}];
+                default             : return ['E-1000', {}];
+            }
         }
         finally
         {
-            conn.end();
+            if(conn) conn.end();
         }
         return [false, this];
     }
@@ -123,12 +141,15 @@ class Asistente
         }
         catch(e)
         {
-            // console.log(e);
-            return ['db', {}];
+            switch(e.code)
+            {
+                case 'ECONNREFUSED' : return ['N-1000', {}];
+                default             : return ['E-1000', {}];
+            }
         }
         finally
         {
-            conn.end();
+            if(conn) conn.end();
         }
         return [false, {}];
     }

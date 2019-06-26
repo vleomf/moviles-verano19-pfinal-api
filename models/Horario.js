@@ -24,12 +24,15 @@ class Horario
         }
         catch(e)
         {
-            // console.log(e);
-            return ['db', []];
+            switch(e.code)
+            {
+                case 'ECONNREFUSED' : return ['N-1000', {}];
+                default             : return ['E-1000', {}];
+            }
         }
         finally
         {
-            conn.end();
+            if(conn) conn.end();
         }
         let horarios = [];
         rows.forEach(element => {
@@ -49,19 +52,22 @@ class Horario
         }
         catch(e)
         {
-            // console.log(e);
-            return ['db', {}];
+            switch(e.code)
+            {
+                case 'ECONNREFUSED' : return ['N-1000', {}];
+                default             : return ['E-1000', {}];
+            }
         }
         finally
         {
-            conn.end();
+            if(conn) conn.end();
         }
         return [false, rows[0] ? new Horario(cc(rows[0])) : {}];
     }
 
     async Crear()
     {
-        if(!this.curso || !this.dia || !this.hora) return ['usr', {
+        if(!this.curso || !this.dia || !this.hora) return ['U-1000', {
             curso: this.curso ? 'ok' : 'requerido',
             salon: this.salon ? 'ok' : 'requerido',
             dia:   this.dia   ? 'ok' : 'requerido',
@@ -79,12 +85,15 @@ class Horario
         }
         catch(e)
         {
-            // console.log(e);
-            return ['db', {}];
+            switch(e.code)
+            {
+                case 'ECONNREFUSED' : return ['N-1000', {}];
+                default             : return ['E-1000', {}];
+            }
         }
         finally
         {
-            conn.end();
+            if(conn) conn.end();
         }
         return [false, this];
     }
@@ -99,7 +108,11 @@ class Horario
             query  = query.substring(0, query.length - 1);
             query += ' WHERE id = ?';
         
-        let datos = [this.curso, this.dia, this.hora, id].filter(Boolean);
+        let datos = [this.curso, this.dia, this.hora].filter(Boolean);
+        if(!datos.length) return ['U-1000', {
+            enviados: 0,
+            disponibles: Object.keys(this).filter( e => { return e != 'id' ? e : undefined })
+        }];
 
         let conn;
         try
@@ -109,12 +122,15 @@ class Horario
         }
         catch(e)
         {
-            // console.log(e);
-            return ['db', {}];
+            switch(e.code)
+            {
+                case 'ECONNREFUSED' : return ['N-1000', {}];
+                default             : return ['E-1000', {}];
+            }
         }
         finally
         {
-            conn.end();
+            if(conn) conn.end();
         }
         return [false, this];
     }
@@ -130,12 +146,15 @@ class Horario
         }
         catch(e)
         {
-            // console.log(e);
-            return ['db', {}];
+            switch(e.code)
+            {
+                case 'ECONNREFUSED' : return ['N-1000', {}];
+                default             : return ['E-1000', {}];
+            }
         }
         finally
         {
-            conn.end();
+            if(conn) conn.end();
         }
         return [false, {}];
     }

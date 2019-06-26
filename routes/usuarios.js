@@ -6,66 +6,121 @@ const Usuario = require('../models/Usuario');
 router.get('/', async (req, res) => {
   let usuario = new Usuario();
 
-  [status, usuario] = await usuario.ObtenerTodos();
-  switch(status.error)
+  [error, usuario] = await usuario.ObtenerTodos();
+  if(error[0] === 'N' || error[0] === 'E')
   {
-    case 'db': res.statusCode = 500; break;
-    default  : res.statusCode = 200; break;
+    res.statusCode = 500;
+    return res.json({
+      error:{
+        codigo: error,
+        objetivo: 'GET /usuarios',
+        cuerpo: req.body
+      }
+    });
   }
 
-  res.send(usuario);
+  return res.send(usuario);
 });
 
 router.get('/:id', async(req, res) => {
   let usuario = new Usuario();
 
-  [status, usuario] = await usuario.Obtener(req.params.id);
-  switch(status.error)
+  [error, usuario] = await usuario.Obtener(req.params.id);
+  if(error[0] === 'N' || error[0] === 'E')
   {
-    case 'db':  res.statusCode = 500; break;
-    case 'usr': res.statusCode = 400; break;
+    res.statusCode = 500;
+    return res.json({
+      error:{
+        codigo: error,
+        objetivo: `GET /usuarios/${req.params.id}`,
+        cuerpo: req.body
+      }
+    });
   }
-  res.send(usuario);
+  return res.send(usuario);
 });
 
 router.post('/', async (req, res) => {
   let usuario = new Usuario(req.body);
 
-  [status, usuario] = await usuario.Crear();
-  switch(status.error)
+  [error, usuario] = await usuario.Crear();
+  if(error[0] === 'N' || error[0] === 'E')
   {
-    case 'db' : res.statusCode = 500; break;
-    case 'usr': res.statusCode = 400; break;
-    default   : res.statusCode = 201; break;
+    res.statusCode = 500;
+    return res.json({
+      error:{
+        codigo: error,
+        objetivo: 'POST /usuarios',
+        cuerpo: req.body
+      }
+    });
   }
-  
-  res.send(usuario);
+  if(error[0] === 'U')
+  {
+    res.statusCode = 400;
+    return res.json({
+      error:{
+        codigo: error,
+        objetivo: 'POST /usuarios',
+        cuerpo: req.body,
+      },
+      validacion: usuario
+    })
+  }
+  res.statusCode = 201;
+  return res.send(usuario);
 });
 
 router.patch('/:id', async(req, res) =>{
   let usuario = new Usuario(req.body);
   
-  [status, usuario] = await usuario.Actualizar(req.params.id);
-  switch(status.error)
+  [error, usuario] = await usuario.Actualizar(req.params.id);
+  if(error[0] === 'N' || error[0] === 'E')
   {
-    case 'db'  : res.statusCode = 500; break;
-    case 'usr' : res.statusCode = 400; break;
+    res.statusCode = 500;
+    return res.json({
+      error:{
+        codigo: error,
+        objetivo: `PATCH /usuarios/${req.params.id}`,
+        cuerpo: req.body
+      }
+    })
   }
-  res.send(usuario);
+  if(error[0] === 'U')
+  {
+    res.statusCode = 400;
+    return res.json({
+      error:{
+        codigo: error,
+        objetivo: `PATCH /usuarios/${req.params.id}`,
+        cuerpo: req.body
+      },
+      validacion: usuario
+    });
+  }
+
+  return res.send(usuario);
 });
 
 router.delete('/:id', async(req, res) => {
   let usuario = new Usuario();
 
-  [status, usuario] = await usuario.Eliminar(req.params.id);
-  switch(status.error)
+  [error, usuario] = await usuario.Eliminar(req.params.id);
+  if(error[0] === 'N' || error[0] === 'E')
   {
-    case 'db' : res.statusCode = 500; break;
-    case 'usr': res.statusCode = 400; break;
-    default   : res.statusCode = 201; break;
+    res.statusCode = 500;
+    return res.json({
+      error:{
+        codigo: error,
+        objetivo: `DELETE /usuarios/${req.params.id}`,
+        cuerpo: req.body
+      }
+    })
   }
 
-  res.send(usuario);
+  return res.send(usuario);
 });
+
+
 
 module.exports = router;

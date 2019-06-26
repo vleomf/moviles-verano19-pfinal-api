@@ -26,14 +26,15 @@ class Curso
         }
         catch(e)
         {
-            //console.log(e);
-            return [{error: 'db'}, {
-                mensaje: 'Error al obtener los Cursos'
-            }];
+            switch(e.code)
+            {
+                case 'ECONNREFUSED' : return ['N-1000', {}];
+                default             : return ['E-1000', {}];
+            }
         }
         finally
         {
-            conn.end();
+            if(conn) conn.end();
         }
 
         let cursos = [];
@@ -41,7 +42,7 @@ class Curso
             cursos.push( new Curso( cc(row) ) );
         });
 
-        return [{error: false}, cursos];
+        return [false, cursos];
     }
 
     async Obtener(id)
@@ -58,21 +59,22 @@ class Curso
         }
         catch(e)
         {
-            // console.log(e);
-            return [{error: 'db'}, {
-                mensaje: 'Error al obtener Curso'                
-            }];
+            switch(e.code)
+            {
+                case 'ECONNREFUSED' : return ['N-1000', {}];
+                default             : return ['E-1000', {}];
+            }
         }
         finally
         {
-            conn.end();
+            if(conn) conn.end();
         }
-        return [{error: false}, rows[0] ? new Curso(cc(rows[0])) : {}];
+        return [false, rows[0] ? new Curso(cc(rows[0])) : {}];
     }
 
     async Crear()
     {
-        if(!this.matricula || !this.nombre || !this.inicio || !this.fin) return [{error: 'usr'},{
+        if(!this.matricula || !this.nombre || !this.inicio || !this.fin) return ['U-1000',{
             matricula: this.matricula ? 'ok' : 'requerido',
             nombre:    this.nombre    ? 'ok' : 'requerido',
             inicio:    this.inicio    ? 'ok' : 'requerido',
@@ -90,17 +92,18 @@ class Curso
         }
         catch(e)
         {
-            // console.log(e);
-            return [{error: 'db'}, {
-                mensaje: 'Error al crear Curso'
-            }];
+            switch(e.code)
+            {
+                case 'ECONNREFUSED' : return ['N-1000', {}];
+                default             : return ['E-1000', {}];
+            }
         }
         finally
         {
-            conn.end();
+            if(conn) conn.end();
         }
 
-        return [{error: false}, this];
+        return [false, this];
     }   
 
     async Actualizar(id)
@@ -113,7 +116,12 @@ class Curso
             query  = query.substring(0, query.length - 1);
             query += ' WHERE id = ?';
         
-        let datos = [ this.matricula, this.nombre, this.inicio, this.fin, id ].filter(Boolean);
+        let datos = [ this.matricula, this.nombre, this.inicio, this.fin].filter(Boolean);
+        if(!datos.length) return ['U-1000', {
+            enviados: 0,
+            disponibles: Object.keys(this).filter(el => { return el != 'id' ? el : undefined })
+        }];
+        datos.push(id);
         
         let conn;
         try
@@ -123,17 +131,18 @@ class Curso
         }
         catch(e)
         {
-            // console.log(e);
-            return [{error: 'db'}, {
-                mensaje: 'Error al actualizar Curso'
-            }];
+            switch(e.code)
+            {
+                case 'ECONNREFUSED' : return ['N-1000', {}];
+                default             : return ['E-1000', {}];
+            }
         }
         finally
         {
-            conn.end();
+            if(conn) conn.end();
         }
 
-        return [{error: false}, this];
+        return [false, this];
     }
 
     async Eliminar(id)
@@ -148,17 +157,18 @@ class Curso
         }
         catch(e)
         {
-            // console.log(e)
-            return [{error: 'db'}, {
-                mensaje: 'Error al eliminar Curso'
-            }];
+            switch(e.code)
+            {
+                case 'ECONNREFUSED' : return ['N-1000', {}];
+                default             : return ['E-1000', {}];
+            }
         }
         finally
         {
-            conn.end();
+            if(conn) conn.end();
         }
 
-        return[{error: false}, {}];
+        return[false, {}];
     }
 }
 

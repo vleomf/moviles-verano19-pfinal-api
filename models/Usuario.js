@@ -32,14 +32,15 @@ class Usuario
         }
         catch(e)
         {
-            // console.log(err);
-            return [{ error: 'db' }, {
-                mensaje: 'Error al obtener los Usuarios'
-            }];
+            switch(e.code)
+            {
+                case 'ECONNREFUSED' : return ['N-1000', {}];
+                default             : return ['E-1000', {}];
+            }
         }
         finally
         {
-            conn.end();
+            if(conn) conn.end();
         }
         
         let usuarios = [];
@@ -47,7 +48,7 @@ class Usuario
             usuarios.push( new Usuario( cc(row) ) );
         })
 
-        return [{ error: false }, usuarios];
+        return [false , usuarios];
     }
 
     async Obtener(id)
@@ -64,23 +65,24 @@ class Usuario
         }
         catch(e)
         {
-            // console.log(e);
-            return [{error: 'db'}, {
-                mensaje: 'Error al obtener Usuario'
-            }];
+            switch(e.code)
+            {
+                case 'ECONNREFUSED' : return ['N-1000', {}];
+                default             : return ['E-1000', {}];
+            }
         }
         finally
         {
-            conn.end();
+            if(conn) conn.end();
         }
 
-        return [{error: false}, rows[0] ? new Usuario(cc(rows[0])) : {}];
+        return [false , rows[0] ? new Usuario(cc(rows[0])) : {}];
     }
 
     async Crear()
     {
         if( !this.matricula || !this.apPaterno || !this.apMaterno || !this.nombre ||
-            !this.correoElectronico || !this.rol ) return [{ error: 'usr' }, {
+            !this.correoElectronico || !this.rol ) return ['U-1000', {
                 matricula: this.matricula ? 'ok' : 'requerido',
                 apPaterno: this.apPaterno ? 'ok' : 'requerido',
                 apMaterno: this.apMaterno ? 'ok' : 'requerido',
@@ -112,18 +114,19 @@ class Usuario
         }
         catch(e)
         {
-            // console.log(e);
-            return [{ error : 'db' }, {
-                mensaje: "Error al crear Usuario"
-            }];
+            switch(e.code)
+            {
+                case 'ECONNREFUSED' : return ['N-1000', {}];
+                default             : return ['E-1000', {}];
+            }
         }
         finally
         {
-            conn.end();
+            if(conn) conn.end();
         }
 
         this.password = undefined;
-        return [{ error: false }, this];
+        return [false, this];
     }
 
     async Actualizar(id)
@@ -143,11 +146,15 @@ class Usuario
         this.EncriptarPassword();
         let datos = [
             this.matricula,         this.apPaterno, this.apMaterno, this.nombre,
-            this.correoElectronico, this.rol,       this.password,  this.fotografia, id
-        ].filter(Boolean);
+            this.correoElectronico, this.rol,       this.password,  this.fotografia].filter(Boolean);
 
-        console.log(query, datos);
+        if(!datos.length) return ['U-1000', {
+            enviados: 0,
+            disponibles: Object.keys(this).filter(el => { return el != 'id' ? el : undefined })
+        }];
 
+        datos.push(id);
+        
         let conn;
         try
         {
@@ -156,18 +163,19 @@ class Usuario
         }
         catch(e)
         {
-            console.log(e);
-            return [{error: 'db'}, {
-                mensaje: 'Error al actualizar Usuario'
-            }];
+            switch(e.code)
+            {
+                case 'ECONNREFUSED' : return ['N-1000', {}];
+                default             : return ['E-1000', {}];
+            }
         }
         finally
         {
-            conn.end();
+            if(conn) conn.end();
         }
 
         this.password = undefined;
-        return [{error: false}, this];
+        return [false, this];
     }
 
     async Eliminar(id)
@@ -182,16 +190,17 @@ class Usuario
         }
         catch(e)
         {
-            // console.log(e);
-            return [{error: 'db'}, {
-                mensaje: 'Error al eliminar Usuario'
-            }];
+            switch(e.code)
+            {
+                case 'ECONNREFUSED' : return ['N-1000', {}];
+                default             : return ['E-1000', {}];
+            }
         }
         finally
         {
-            conn.end();
+            if(conn) conn.end();
         }
-        return [{error: false}, {}];
+        return [false, {}];
     }
 
     async EncriptarPassword()

@@ -30,11 +30,15 @@ class Salon
             }
             catch(e)
             {
-                return ['db', []];
+                switch(e.code)
+                {
+                    case 'ECONNREFUSED' : return ['N-1000', {}];
+                    default             : return ['E-1000', {}];
+                }
             }
             finally
             {
-                conn.end();
+                if(conn) conn.end();
             }
 
         let salones = [];
@@ -60,12 +64,15 @@ class Salon
         }
         catch(e)
         {
-            // console.log(e);
-            return ['db', {}];
+            switch(e.code)
+            {
+                case 'ECONNREFUSED' : return ['N-1000', {}];
+                default             : return ['E-1000', {}];
+            }
         }
         finally
         {
-            conn.end();
+            if(conn) conn.end();
         }
 
         return [false, rows[0] ? new Salon(cc(rows[0])) : {}];
@@ -74,7 +81,7 @@ class Salon
     async Crear()
     {
         if( !this.curso || !this.codigo || !this.edificio || !this.facultad ||
-            !this.institucion) return ['usr', {
+            !this.institucion) return ['U-1000', {
                 codigo: this.codigo           ? 'ok' : 'requerido',
                 edificio: this.edificio       ? 'ok' : 'requerido',
                 facultad: this.facultad       ? 'ok' : 'requerido',
@@ -100,12 +107,15 @@ class Salon
         }
         catch(e)
         {
-            // console.log(e);
-            return ['db', {}];
+            switch(e.code)
+            {
+                case 'ECONNREFUSED' : return ['N-1000', {}];
+                default             : return ['E-1000', {}];
+            }
         }
         finally
         {
-            conn.end();
+            if(conn) conn.end();
         }
         return [false, this];
     }
@@ -123,7 +133,14 @@ class Salon
             query += ' WHERE id = ?'; 
         
         let datos = [ this.codigo, this.edificio, this.facultad,
-            this.institucion, this.latitud, this.longitud, id].filter(Boolean);
+            this.institucion, this.latitud, this.longitud].filter(Boolean);
+        
+        if(!datos.length) return ['U-1000', {
+            enviados: 0,
+            disponibles: Object.keys(this).filter( el => { return el != 'id' ? el : undefined })
+        }]
+
+        datos.push(id);
         
         let conn;
         try
@@ -133,12 +150,15 @@ class Salon
         }
         catch(e)
         {
-            // console.log(e);
-            return ['db', {}];
+            switch(e.code)
+            {
+                case 'ECONNREFUSED' : return ['N-1000', {}];
+                default             : return ['E-1000', {}];
+            }
         }
         finally
         {
-            conn.end();
+            if(conn) conn.end();
         }
 
         return [false, this];
@@ -155,12 +175,15 @@ class Salon
         }
         catch(e)
         {
-            // console.log(e);
-            return ['db', {}];
+            switch(e.code)
+            {
+                case 'ECONNREFUSED' : return ['N-1000', {}];
+                default             : return ['E-1000', {}];
+            }
         }
         finally
         {
-            conn.end();
+            if(conn) conn.end();
         }
         return [false, {}];
     }

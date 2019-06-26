@@ -34,6 +34,9 @@ class Usuario
         {
             switch(e.code)
             {
+                //  NOTA: Creo deberia regresar el mensaje de error junto con el codigo.
+                //  El segundo valor enviado en el arreglo deberia reservarse solo para 
+                //  la informacion que regresa el metodo del modelo y NADA MAS.
                 case 'ECONNREFUSED' : return ['N-1000', {}];
                 default             : return ['E-1000', {}];
             }

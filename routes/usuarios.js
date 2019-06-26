@@ -7,6 +7,9 @@ router.get('/', async (req, res) => {
   let usuario = new Usuario();
 
   [error, usuario] = await usuario.ObtenerTodos();
+  //  NOTA: Aqui al regresar el error deberia recibir un objeto con
+  //  todo lo relacionado al error, el segundo parametro del array
+  //  se reservaria SOLAMENTE para el retorno de la informacion de usuario.
   if(error[0] === 'N' || error[0] === 'E')
   {
     res.statusCode = 500;

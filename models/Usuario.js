@@ -120,6 +120,16 @@ class Usuario
 
     static async ObtenerPorCorreo(correoElectronico)
     {
+        if(!correoElectronico) return[{
+            codigo: 'U-1000',
+            tipo: 'U',
+            ofensa: {
+                requeridos: {
+                    correoElectronico: false
+                }
+            }
+        }];
+        
         let query  = 'SELECT id, matricula, ap_paterno, ap_materno, nombre, password,';
             query += 'correo_electronico, fotografia, rol FROM usuarios WHERE correo_electronico = ?';
 
@@ -132,6 +142,7 @@ class Usuario
         }
         catch(e)
         {
+            console.log(e);
             switch(e.code)
             {
                 case 'ECONNREFUSED' : return [{

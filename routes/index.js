@@ -118,15 +118,15 @@ router.post('/registrar', async(req, res, next) => {
 /**
  * @url /autorizar
  * @requires
- * @param {matricula} req.body.matricula  Matricula de usuario
- * @param {password}  req.body.password   Constraseña de usuario
+ * @param {matricula} req.body.correoElectronico  Correo de usuario
+ * @param {password}  req.body.password           Constraseña de usuario
  */
 
 router.post('/autorizar', async(req, res, next) => {
   //  Obtenemos los datos de acceso y validamos
   const datosAcceso = req.body;
 
-  if(!datosAcceso.matricula || !datosAcceso.password)
+  if(!datosAcceso.correoElectronico || !datosAcceso.password)
   {
     res.statusCode = 400;
     return res.json({
@@ -136,10 +136,9 @@ router.post('/autorizar', async(req, res, next) => {
         cuerpo: datosAcceso,
         ofensa: {
           requeridos: {
-            matricula: datosAcceso.matricula ? true : false,
+            correoElectronico: datosAcceso.correoElectronico ? true : false,
             password:  datosAcceso.password  ? true : false
-          },
-          cabeceras: ['X-API-KEY']
+          }
         }
       }
     })
@@ -147,7 +146,7 @@ router.post('/autorizar', async(req, res, next) => {
 
   //  Validacion de peticion correcta. 
   //  Verificamos credenciales 
-  [err, usuario] = await Usuario.ObtenerPorMatricula(datosAcceso.matricula);
+  [err, usuario] = await Usuario.ObtenerPorCorreo(datosAcceso.correoElectronico);
   if(err)
   {
     switch(err.tipo)

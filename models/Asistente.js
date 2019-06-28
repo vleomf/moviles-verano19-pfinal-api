@@ -47,15 +47,14 @@ class Asistente
         return [false, asistentes];
     }
 
-    static async Obtener(idAsistente, idCurso)
+    static async ObtenerPorCurso(idCurso)
     {
-        let query  = 'SELECT id, usuario, curso FROM asistentes WHERE id = ?';
-            query += 'AND curso = ?';
+        let query  = 'SELECT id, usuario, curso FROM asistentes WHERE curso = ?';
         let conn, rows;
         try
         {
             conn = await db.Iniciar();
-            rows = await conn.query(query, [idAsistente, idCurso]);
+            rows = await conn.query(query, idCurso);
         }
         catch(e)
         {
@@ -77,7 +76,11 @@ class Asistente
         {
             if(conn) conn.end();
         }
-        return [false, new Asistente(cc(rows[0]))];
+        let asistentes = [];
+        rows.forEach( row => {
+            asistentes.push( new Asistente( cc(row) ));
+        });
+        return [false, asistentes];
     }
 
     async Crear()

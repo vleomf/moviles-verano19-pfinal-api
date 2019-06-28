@@ -87,7 +87,7 @@ class Horario
         let query  = 'SELECT id, curso, salon, dia, hora FROM horarios WHERE curso = ?';
         let rows, conn;
         try
-        {
+        {   
             conn = await db.Iniciar();
             rows = await conn.query(query, [idCurso]);
             if(!rows.length) return [false, null];
@@ -112,7 +112,11 @@ class Horario
         {
             if(conn) conn.end();
         }
-        return [false, new Horario(cc(rows[0]))];
+        let horarios = [];
+        rows.forEach(element => {
+            horarios.push( new Horario(cc(element)));
+        });
+        return [false, horarios];
     }
 
     async Crear()
@@ -231,6 +235,38 @@ class Horario
         {
             conn = await db.Iniciar();
             await conn.query(query, this.id);
+        }
+        catch(e)
+        {
+            switch(e.code)
+            {
+                case 'ECONNREFUSED' : return [{
+                    codigo: 'N-1000',
+                    tipo: 'N',
+                    ofensa: false
+                }, null];
+                default  : return [{
+                    codigo: 'E-1000',
+                    tipo: 'E',
+                    ofensa: false
+                }, null];
+            }
+        }
+        finally
+        {
+            if(conn) conn.end();
+        }
+        return [false, null];
+    }
+
+    static async EliminarDeCurso(idCurso)
+    {
+        const query = 'DELETE from horarios WHERE curso = ?';
+        let conn;
+        try
+        {
+            conn = await db.Iniciar();
+            await conn.query(query, idCurso);
         }
         catch(e)
         {

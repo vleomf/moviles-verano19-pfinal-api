@@ -211,6 +211,8 @@ class Curso
         }
         catch(e)
         {
+            console.log(e);
+            
             switch(e.code)
             {
                 case 'ECONNREFUSED' : return [{

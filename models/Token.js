@@ -18,7 +18,7 @@ class Token
 
         let hora_actual   = moment();
         let hora_creacion = hora_actual.format();
-        let expiracion    = hora_actual.add(60, 'minutes').format();
+        let expiracion    = hora_actual.add(300, 'minutes').format();
         let token = randomstring.generate({ length: 50 });
 
         let datos = [ idUsr, hora_creacion, expiracion, token];

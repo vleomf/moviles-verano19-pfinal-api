@@ -61,7 +61,7 @@ class Salon
     {
         let query  = 'SELECT id, codigo, edificio,';
             query += 'facultad, institucion, latitud, longitud';
-            query += 'FROM salones WHERE id = ? ORDER BY institucion, facultad';
+            query += ' FROM salones WHERE id = ? ORDER BY institucion, facultad';
 
         let conn;
         let rows;
@@ -73,6 +73,8 @@ class Salon
         }
         catch(e)
         {
+            console.log(e);
+            
             switch(e.code)
             {
                 case 'ECONNREFUSED' : return [{

@@ -82,6 +82,39 @@ class Horario
         return [false, new Horario(cc(rows[0]))];
     }
 
+    static async ObtenerPorCurso(idCurso)
+    {
+        let query  = 'SELECT id, curso, salon, dia, hora FROM horarios WHERE curso = ?';
+        let rows, conn;
+        try
+        {
+            conn = await db.Iniciar();
+            rows = await conn.query(query, [idCurso]);
+            if(!rows.length) return [false, null];
+        }
+        catch(e)
+        {
+            switch(e.code)
+            {
+                case 'ECONNREFUSED' : return [{
+                    codigo: 'N-1000',
+                    tipo: 'N',
+                    ofensa: false
+                }, null];
+                default : return [{
+                    codigo: 'E-1000',
+                    tipo: 'E',
+                    ofensa: false
+                }, null];
+            }
+        }
+        finally
+        {
+            if(conn) conn.end();
+        }
+        return [false, new Horario(cc(rows[0]))];
+    }
+
     async Crear()
     {
         if(!this.curso || !this.dia || !this.hora) return [{

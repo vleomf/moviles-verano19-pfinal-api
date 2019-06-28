@@ -17,7 +17,7 @@ router.post('/', Acceso.Profesor, async(req, res) => {
     const datosSalon    = req.body.salon;
     const datosHorarios = req.body.horarios;
     
-    /** !! VALIDACION JSON !! **/
+    /** !! PENDIENTE VALIDACION JSON !! **/
 
     let curso = new Curso(datosCurso);
     [error, _] = await curso.Crear();

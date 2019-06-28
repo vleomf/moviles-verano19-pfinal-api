@@ -1,23 +1,22 @@
 const db = require('../db');
 const cc = require('camelcase-keys');
-const Usuario = require('./Usuario');
 
-class Asistente
+class Actividad
 {
     constructor(a)
     {
         if(!a) return;
-        this.id = a.id;
-        this.usuario = a.usuario;
-        this.curso = a.curso;
+        this.id     = a.id;
+        this.curso  = a.curso;
+        this.nombre = a.nombre; 
+        this.indice = a.indice;
+        this.descripcion = a.descripcion;
     }
 
-    static async ObtenerPorCurso(idCurso)
+    static async ObtenerTodosPorCurso(idCurso)
     {
-        //WHERE curso = ?
-        let query  = 'SELECT u.matricula, u.ap_paterno, u.ap_materno, u.nombre FROM asistentes AS a ';
-            query += 'INNER JOIN usuarios AS u ON a.usuario = u.id WHERE a.curso = ? AND u.rol != \'profesor\' ORDER BY u.rol'
-        let conn, rows;
+        let query = 'SELECT id, curso, nombre, indice, descripcion FROM actividades WHERE curso = ? ORDER BY indice';
+        let rows, conn;
         try
         {
             conn = await db.Iniciar();
@@ -25,6 +24,8 @@ class Asistente
         }
         catch(e)
         {
+            console.log(e);
+            
             switch(e.code)
             {
                 case 'ECONNREFUSED' : return [{
@@ -43,27 +44,27 @@ class Asistente
         {
             if(conn) conn.end();
         }
-        let asistentes = [];
-        rows.forEach( row => {
-            asistentes.push( new Usuario( cc(row) ));
+        let actividades = [];
+        rows.forEach(actividad => {
+            actividades.push( new Actividad(cc(actividad)));
         });
-        return [false, asistentes];
+        return [false, actividades];
     }
 
-    static async ObtenerUsuarioPorCurso(idCurso, idUsuario)
+    static async ObtenerPor_id_cursoId(idCurso, idActividad)
     {
-        //WHERE curso = ?
-        let query  = 'SELECT u.ap_paterno, u.ap_materno, u.nombre, u.rol FROM asistentes AS a ';
-            query += 'INNER JOIN usuarios AS u ON a.usuario = u.id WHERE a.curso = ? AND u.id = ? ORDER BY u.rol'
-        let conn, rows;
+        let query  = 'SELECT id, curso, nombre, indice, descripcion FROM actividades ';
+            query += 'WHERE curso = ? AND id = ? ORDER BY indice'
+        let rows, conn;
         try
         {
             conn = await db.Iniciar();
-            rows = await conn.query(query, [idCurso, idUsuario]);
+            rows = await conn.query(query, [idCurso, idActividad]);
             if(!rows.length) return [false, null];
         }
         catch(e)
         {
+            console.log(e)
             switch(e.code)
             {
                 case 'ECONNREFUSED' : return [{
@@ -82,24 +83,14 @@ class Asistente
         {
             if(conn) conn.end();
         }
-        return [false, new Usuario(cc(rows[0]))];
+        return [false, new Actividad(cc(rows[0]))];
     }
 
     async Crear()
     {
-        if(!this.usuario || !this.curso) return [{
-            codigo: 'U-1000',
-            tipo: 'U',
-            ofensa: {
-                requeridos: {
-                    usuario: this.usuario ? true : false,
-                    curso:   this.curso   ? true : false
-                }
-            }
-        }, null];
+        let query = 'INSERT INTO actividades SET curso = ?, nombre = ?, indice = ?, descripcion = ?';
+        let datos = [this.curso, this.nombre, this.indice, this.descripcion];
 
-        let query = 'INSERT INTO asistentes SET usuario = ?, curso = ?';
-        let datos = [this.usuario, this.curso];
         let conn, rows;
         try
         {
@@ -132,17 +123,16 @@ class Asistente
 
     async Actualizar()
     {
-        let query  = 'UPDATE asistentes SET ';
-            query += this.usuario ? 'usuario = ?,' : '';
-            query += this.curso   ? 'curso   = ?,' : '';
-            query  = query.substr(0, query.length - 1) ;
+        let query  = 'UPDATE actividades SET ';
+            query += this.nombre ? 'nombre = ?,' : '';
+            query += this.indice ? 'indice = ?,' : '';
+            query += this.descripcion ? 'descripcion = ?,' : '';
+            query  = query.substring(0, query.length - 1);
             query += ' WHERE id = ?';
+        let query2 = 'SELECT id, curso, nombre, indice, descripcion FROM actividades WHERE id = ?';
+        let datos  = [this.nombre, this.indice, this.descripcion].filter(Boolean);
 
-        let query2 = 'SELECT id, usuario, curso FROM asistentes WHERE id = ?';
-
-        let datos = [this.usuario, this.curso].filter(Boolean);
-
-        if(!datos.length) return [{
+        if(!datos.length) return[{
             codigo: 'U-1000',
             tipo: 'U',
             ofensa: {
@@ -152,7 +142,7 @@ class Asistente
         }, null];
 
         datos.push(this.id);
-        
+
         let conn;
         try
         {
@@ -160,8 +150,10 @@ class Asistente
             await conn.query(query, datos);
 
             const datosActualizados = await conn.query(query2, this.id);
-            this.usuario = datosActualizados[0]['usuario'];
-            this.curso   = datosActualizados[0]['curso'];
+            this.curso       = datosActualizados[0]['curso'];
+            this.indice      = datosActualizados[0]['indice'];
+            this.nombre      = datosActualizados[0]['nombre'];
+            this.descripcion = datosActualizados[0]['descripcion'];
         }
         catch(e)
         {
@@ -172,38 +164,6 @@ class Asistente
                     tipo: 'N',
                     ofensa: false
                 }, null];
-                default : return [{
-                    codigo: 'E-1000',
-                    tipo: 'E',
-                    ofensa: false
-                }, null];
-            }
-        }
-        finally
-        {
-            if(conn) conn.end();
-        }
-        return [false, null];
-    }
-
-    async Eliminar()
-    {
-        const query = 'DELETE FROM asistentes WHERE id = ?';
-        let conn;
-        try
-        {
-            conn = await db.Iniciar();
-            await conn.query(query, this.id);
-        }
-        catch(e)
-        {
-            switch(e.code)
-            {
-                case 'ECONNREFUSED' : return [{
-                    codigo: 'N-1000',
-                    tipo: 'N',
-                    ofensa: false
-                }, {}];
                 default : return [{
                     codigo: 'E-1000',
                     tipo: 'E',
@@ -218,4 +178,5 @@ class Asistente
         return [false, null];
     }
 }
-module.exports = Asistente;
+
+module.exports = Actividad;

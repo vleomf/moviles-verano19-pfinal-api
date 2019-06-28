@@ -7,6 +7,9 @@ var logger = require('morgan');
 var indexRouter = require('./routes/index');
 var usersRouter = require('./routes/usuarios');
 var cursosRouter = require('./routes/cursos');
+var actividadesCursoRouter = require('./routes/actividades');
+var asistentesCursoRouter = require('./routes/asistentes');
+var asistenciasCursoRouter = require('./routes/asistencias');
 
 // var salonesRouter = require('./routes/salones');
 // var horariosRouter = require('./routes/horarios');
@@ -28,7 +31,9 @@ app.use(express.static(path.join(__dirname, 'public')));
 app.use('/', indexRouter);
 app.use('/usuarios', AccesoMiddleware.Autorizar, usersRouter);
 app.use('/cursos',   AccesoMiddleware.Autorizar ,cursosRouter);
-
+app.use('/cursos/:id/actividades', AccesoMiddleware.Autorizar, actividadesCursoRouter);
+app.use('/cursos/:id/asistentes' , AccesoMiddleware.Autorizar, asistentesCursoRouter);
+app.use('/cursos/:id/asistencias', AccesoMiddleware.Autorizar, asistenciasCursoRouter);
 
 
 // catch 404 and forward to error handler

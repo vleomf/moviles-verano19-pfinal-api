@@ -5,15 +5,10 @@ const Curso     = require('../models/Curso');
 const Salon     = require('../models/Salon');
 const Horario   = require('../models/Horario');
 const Asistente = require('../models/Asistente');
+const Actividad = require('../models/Actividad');
 const Jschema   = require('jsonschema').Validator;
 
-
-/**
- * @param {Curso}     datosCurso        Datos del curso a crear
- * @param {Salon}     datosSalon        Datos del salon asignado
- * @param {horario[]} datosHorarios     Array de Datos de los horarios del curso
- */
-
+// Obtener Todos los Cursos registrados
 router.get('/', async(req, res) => {
     [error, cursos] = await Curso.ObtenerTodos();
     if(err)
@@ -31,6 +26,7 @@ router.get('/', async(req, res) => {
     return res.json(cursos);
 });
 
+//  Obtener curso por id
 router.get('/:id', async(req, res) => {
     const id = req.params.id;
     if(!id)
@@ -48,7 +44,6 @@ router.get('/:id', async(req, res) => {
     [error, curso] = await Curso.Obtener(id)
     if(error)
     {
-        console.log(1);
         res.statusCode = 500;
         return res.json({
             error: {
@@ -62,7 +57,6 @@ router.get('/:id', async(req, res) => {
     [error, horario] = await Horario.ObtenerPorCurso(curso.id);
     if(error)
     {
-        console.log(2);
         res.statusCode = 500;
         return res.json({
             error: {
@@ -76,7 +70,6 @@ router.get('/:id', async(req, res) => {
     [error, salon] = await Salon.Obtener(horario[0].salon);
     if(error)
     {
-        console.log(3);
         res.statusCode = 500;
         return res.json({
             error: {
@@ -97,6 +90,7 @@ router.get('/:id', async(req, res) => {
     return res.json(respuestaCurso);
 });
 
+//  Crear un nuevo curso
 router.post('/', Acceso.Profesor, async(req, res) => {
     const datosCurso    = req.body.curso;
     const datosSalon    = req.body.salon;
@@ -352,6 +346,7 @@ router.post('/', Acceso.Profesor, async(req, res) => {
     return res.send();
 });
 
+//  Actualizar curso por id
 router.patch('/:id', Acceso.Profesor, async(req, res) => {
     const idCurso      = req.params.id;
     const datosCurso   = req.body.curso;
@@ -476,6 +471,7 @@ router.patch('/:id', Acceso.Profesor, async(req, res) => {
     })
 });
 
+//  Eliminar Curso por id
 router.delete('/:id', Acceso.Profesor, async(req, res) => {
     const idCurso = req.params.id;
     [error, _] = await Horario.EliminarDeCurso(idCurso);

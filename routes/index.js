@@ -4,12 +4,15 @@ const Usuario = require('../models/Usuario');
 const Token   = require('../models/Token');
 
 /* GET home page. */
-router.get('/', function(req, res, next) {
-  res.render('index', { title: 'Express' });
-});
+// router.get('/', function(req, res, next) {
+//   res.render('index', { title: 'Express' });
+// });
 
-
-
+/**
+ * @url /registrar
+ * @requires
+ * @param {Usuario} req.body  Datos de usuario
+ */
 router.post('/registrar', async(req, res, next) => {
   const datosUsuario = req.body;
   let nuevoUsuario = new Usuario();
@@ -30,7 +33,7 @@ router.post('/registrar', async(req, res, next) => {
     return res.json({
       error: {
         codigo: err.codigo,
-        obetivo: `${req.method} ${req.baseUrl}`,
+        obetivo: `${req.method} ${req.url}`,
         cuerpo: req.body,
         ofensa: err.ofensa
       }
@@ -43,7 +46,7 @@ router.post('/registrar', async(req, res, next) => {
     return res.json({
       error: {
         codigo: 'U-1000',
-        objetivo: `${req.method} ${req.baseUrl}`,
+        objetivo: `${req.method} ${req.url}`,
         cuerpo: req.body,
         ofensa: err.ofensa
       }
@@ -78,7 +81,7 @@ router.post('/registrar', async(req, res, next) => {
     return res.json({
       error: {
         codigo: err.codigo,
-        obetivo: `${req.method} ${req.baseUrl}`,
+        obetivo: `${req.method} ${req.url}`,
         cuerpo: req.body,
         ofensa: err.ofensa
       }
@@ -87,6 +90,17 @@ router.post('/registrar', async(req, res, next) => {
 
   //  Generamos un token de acceso
   [err, token] = await Token.Generar(nuevoUsuario.id);
+  if(err)
+  {
+    res.statusCode = 500;
+    return res.json({
+      error: {
+        codigo: 'E-1000',
+        objetivo: `${req.method} ${req.url}`,
+        cuerpo: req.body
+      }
+    });
+  }
 
 
   //  Ocultamos datos privados
@@ -101,27 +115,31 @@ router.post('/registrar', async(req, res, next) => {
   });
 });
 
+/**
+ * @url /autorizar
+ * @requires
+ * @param {matricula} req.body.matricula  Matricula de usuario
+ * @param {password}  req.body.password   Constraseña de usuario
+ */
+
 router.post('/autorizar', async(req, res, next) => {
   //  Obtenemos los datos de acceso y validamos
   const datosAcceso = req.body;
-  const token = req.header('autorization');
 
-  if(!datosAcceso.matricula || !datosAcceso.password || !token)
+  if(!datosAcceso.matricula || !datosAcceso.password)
   {
     res.statusCode = 400;
     return res.json({
       error: {
         codigo: 'U-1000',
-        objetivo: `${req.method} ${req.baseUrl}`,
+        objetivo: `${req.method} ${req.url}`,
         cuerpo: datosAcceso,
         ofensa: {
           requeridos: {
             matricula: datosAcceso.matricula ? true : false,
             password:  datosAcceso.password  ? true : false
           },
-          cabeceras:{
-            autorization: token ? true: false
-          }
+          cabeceras: ['X-API-KEY']
         }
       }
     })
@@ -144,7 +162,7 @@ router.post('/autorizar', async(req, res, next) => {
     return res.json({
       error: {
         codigo: err.codigo,
-        obetivo: `${req.method} ${req.baseUrl}`,
+        obetivo: `${req.method} ${req.url}`,
         cuerpo: req.body,
         ofensa: err.ofensa
       }
@@ -163,8 +181,24 @@ router.post('/autorizar', async(req, res, next) => {
 
   //  Validacion de usuario completa.
   //  Asignamos token de sesion
-  console.log(await Token.Verificar(token));
-  res.send();
+  //  Generamos un token de acceso
+  [err, token] = await Token.Generar(usuario.id);
+  if(err)
+  {
+    res.statusCode = 500;
+    return res.json({
+      error: {
+        codigo: err.codigo,
+        objetivo: `${req.method} ${req.url}`,
+        cuerpo: req.body,
+        ofensa: err.ofensa
+      }
+    });
+  }
+
+  res.json({
+    token: token
+  });
 });
 
 module.exports = router;

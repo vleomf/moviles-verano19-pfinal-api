@@ -1,8 +1,9 @@
 const express = require('express');
 const router = express.Router();
 const Usuario = require('../models/Usuario');
+const Acceso = require('../middlewares/Acceso');
 
-/* GET users listing. */
+
 router.get('/', async (req, res) => {
   [error, usuario] = await Usuario.ObtenerTodos();
   if(error)
@@ -11,7 +12,7 @@ router.get('/', async (req, res) => {
     return res.json({
       error: {
         codigo: error.codigo,
-        objetivo: `${req.method} ${req.baseUrl}`,
+        objetivo: `${req.method} ${req.url}`,
         cuerpo: req.body,
         ofensa: error.ofensa
       }
@@ -38,7 +39,7 @@ router.get('/:id', async(req, res) => {
     return res.json({
       error: {
         codigo: error.codigo,
-        objetivo: `${req.method} ${req.baseUrl}`,
+        objetivo: `${req.method} ${req.url}`,
         cuerpo: req.body,
         ofensa: error.ofensa
       }
@@ -48,7 +49,7 @@ router.get('/:id', async(req, res) => {
 });
 
 
-router.patch('/:id', async(req, res) =>{
+router.patch('/:id', Acceso.InformacionPersonal ,async(req, res) =>{
   let datosUs = req.body;
 
   [error, usuario] = await Usuario.Obtener(req.params.id);
@@ -58,7 +59,7 @@ router.patch('/:id', async(req, res) =>{
     return res.json({
       error: {
         codigo: error.codigo,
-        objetivo: `${req.method} ${req.baseUrl}`,
+        objetivo: `${req.method} ${req.url}`,
         cuerpo: req.body,
         ofensa: error.ofensa
       }
@@ -88,7 +89,7 @@ router.patch('/:id', async(req, res) =>{
     return res.json({
       error: {
         codigo: error.codigo,
-        objetivo: `${req.method} ${req.baseUrl}`,
+        objetivo: `${req.method} ${req.url}`,
         cuerpo: req.body,
         ofensa: error.ofensa
       }
@@ -102,7 +103,7 @@ router.patch('/:id', async(req, res) =>{
   return res.send(usuario);
 });
 
-router.delete('/:id', async(req, res) => {
+router.delete('/:id', Acceso.InformacionPersonal, async(req, res) => {
   [error, usuario] = await Usuario.Obtener(req.params.id);
   if(error)
   {
@@ -116,7 +117,7 @@ router.delete('/:id', async(req, res) => {
     return res.json({
       error: {
         codigo: error.codigo,
-        objetivo: `${req.method} ${req.baseUrl}`,
+        objetivo: `${req.method} ${req.url}`,
         cuerpo: req.body,
         ofensa: error.ofensa
       }
@@ -130,7 +131,7 @@ router.delete('/:id', async(req, res) => {
     return res.json({
       error: {
         codigo: error.codigo,
-        objetivo: `${req.method} ${req.baseUrl}`,
+        objetivo: `${req.method} ${req.url}`,
         cuerpo: req.body,
         ofensa: error.ofensa
       }

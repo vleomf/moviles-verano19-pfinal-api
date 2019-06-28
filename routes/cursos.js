@@ -1,192 +1,101 @@
 const express = require('express');
-const router = express.Router();
-const Curso = require('../models/Curso');
-const Asistente = require('../models/Asistente');
+const router  = express.Router();
+const Acceso  = require('../middlewares/Acceso');
+const Curso   = require('../models/Curso');
+const Salon   = require('../models/Salon');
+const Horario = require('../models/Horario');
 
-router.get('/', async(req, res) => {
-    let curso = new Curso();
 
-    [error, curso] = await curso.ObtenerTodos();
+
+/**
+ * @param {Curso}     datosCurso        Datos del curso a crear
+ * @param {Salon}     datosSalon        Datos del salon asignado
+ * @param {horario[]} datosHorarios     Array de Datos de los horarios del curso
+ */
+router.post('/', Acceso.Profesor, async(req, res) => {
+    const datosCurso    = req.body.curso;
+    const datosSalon    = req.body.salon;
+    const datosHorarios = req.body.horarios;
+    
+    /** !! VALIDACION JSON !! **/
+
+    let curso = new Curso(datosCurso);
+    [error, _] = await curso.Crear();
     if(error)
     {
-        res.statusCode = 500;
-        return res.json({
-            error: {
-                codigo: error,
-                objetivo: `${req.method} ${req.baseUrl}`,
-                cuerpo: req.body
-            }
-        });
-    }
-
-    return res.send(curso);
-});
-
-router.get('/:id', async(req, res) => {
-    let curso = new Curso();
-
-    [error, curso] = await curso.Obtener(req.params.id);
-    if(error)
-    {
-        res.statusCode = 500;
-        return res.json({
-            error: {
-                codigo: error,
-                objetivo: `${req.method} ${req.baseUrl}`,
-                cuerpo: req.body
-            }
-        });
-    }
-
-    return res.send(curso);
-});
-
-router.post('/', async(req, res) => {
-    let curso = new Curso(req.body);
-
-    [error, curso] = await curso.Crear();
-    if(error)
-    {
-        let respuesta = {
-            error: {
-                codigo: error,
-                objetivo: `${req.method} ${req.baseUrl}`,
-                cuerpo: req.body
-            }
-        }
-        switch(error)
+        switch(error.tipo)
         {
-            case (error[0] === 'U'): 
-                res.statusCode = 400;
-                respuesta['validacion'] = curso;
-                break;
-            default:
-                res.statusCode = 500;
+            case 'U' : res.statusCode = 400; break;
+            default  : res.statusCode = 500; break;
         }
-        return res.json(respuesta);
+        return res.json({
+            error: {
+                codigo: error.codigo,
+                objetivo: `${req.method} ${req.url}`,
+                cuerpo: req.body,
+                ofensa: error.ofensa
+            }
+        });
     }
 
+    let salon;
+    //  Asignar salon existente
+    if(!datosSalon.id)
+    {
+        salon = new Salon(datosSalon);
+        [error, _] = await salon.Crear();
+        if(error)
+        {
+            switch(error.tipo)
+            {
+                case 'U' : res.statusCode = 400; break;
+                default:   res.statusCode = 500; break;
+            }
+            return res.json({
+                error: {
+                    codigo: error.codigo,
+                    objetivo: `${req.method} ${req.url}`,
+                    cuerpo: req.body,
+                    ofensa: error.ofensa
+                }
+            })
+        }
+    }
+    else
+    {
+        salon = new Salon();
+        salon.id = datosSalon.id;
+    }
+
+    for(let i = 0; i < datosHorarios.length; i++)
+    {
+        if(datosHorarios[i])
+        {
+            let horario = new Horario(datosHorarios[i]);
+            horario.curso = curso.id;
+            horario.salon = salon.id;
+            [error, _]  = await horario.Crear();
+            if(error)
+            {
+                switch(error.tipo)
+                {
+                    case 'U' : res.statusCode = 400; break;
+                    default  : res.statusCode = 500; break;
+                }
+                return res.json({
+                    error: {
+                        codigo: error.codigo,
+                        objetivo: `${req.method} ${req.url}`,
+                        cuerpo: req.body,
+                        ofensa: error.ofensa
+                    }
+                })
+            }
+        }
+    }
+    
     res.statusCode = 201;
-    return res.send(curso);
+    return res.send();
 });
-
-router.patch('/:id', async(req, res) => {
-    let curso = new Curso(req.body);
-
-    [error, curso] = await curso.Actualizar(req.params.id);
-    if(error)
-    {
-        let respuesta = {
-            error: {
-                codigo: error,
-                objetivo : `${req.method} ${req.baseUrl}`,
-                cuerpo: req.body
-            }
-        };
-        switch(error)
-        {
-            case (error[0] === 'U'):
-                res.statusCode = 400;
-                respuesta['validacion'] = curso;
-                break;
-            default:
-                res.statusCode = 500;
-        }
-        return res.json(respuesta);
-    }
-
-    return res.send(curso);
-});
-
-router.delete('/:id', async(req, res) => {
-    let curso =  new Curso();
-
-    [error, curso] = await curso.Eliminar(req.params.id);
-    if(error)
-    {
-        res.statusCode = 500;
-        return res.json({
-            error: {
-                codigo : error,
-                objetivo: `${req.method} ${req.baseUrl}`,
-                cuerpo: req.body
-            }
-        });
-    }
-
-    return res.send(curso);
-});
-
-router.get('/:id/asistentes', async(req, res) => {
-    let curso = new Curso();
-    let asistente = new Asistente();
-
-    [error, curso] = await curso.Obtener(req.params.id);
-    if(error)
-    {
-        res.statusCode = 500;
-        return res.json({
-            error: {
-                codigo: error,
-                objetivo: `${req.method} ${req.baseUrl}`,
-                cuerpo: req.body
-            }
-        });
-    }
-    [error, asistentes]  = await asistente.ObtenerTodos(req.params.id);
-    if(error)
-    {
-        res.statusCode = 500;
-        return res.json({
-            error: {
-                codigo: error,
-                objetivo: `${req.method} ${req.baseUrl}`,
-                cuerpo: req.body
-            }
-        });
-    }
-
-    return res.json({
-        curso: curso,
-        asistentes : asistentes
-    });
-});
-
-router.get('/:idCurso/asistentes/:idAsistente', async(req, res) => {
-    let curso = new Curso();
-    let asistente = new Asistente();
-    const idCurso = req.params.idCurso;
-    const idAsistente = req.params.idAsistente;
-
-    [error, curso] = await curso.Obtener(idCurso);
-    if(error)
-    {
-        res.statusCode = 500;
-        return res.json({
-            error: {
-                codigo: error,
-                objetivo: `${req.method} ${req.baseUrl}`,
-                cuerpo: req.body
-            }
-        })
-    }
-    [error, asistente] = await asistente.Obtener(idAsistente, idCurso);
-    if(error)
-    {
-        res.statusCode = 500;
-        return res.json({
-            error: {
-                codigo: error,
-                objetivo: `${req.method} ${req.baseUrl}`,
-                cuerpo: req.body
-            }
-        })
-    }
-   
-    return res.json({
-        curso: curso,
-        asistente: asistente
-    });
-}); 
 
 module.exports = router;

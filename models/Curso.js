@@ -107,11 +107,12 @@ class Curso
         let query = 'INSERT INTO cursos SET matricula = ?, nombre = ?, inicio = ?, fin = ?';
         let datos = [ this.matricula, this.nombre, this.inicio, this.fin ];
 
-        let conn;
+        let conn, rows;
         try
         {
             conn = await db.Iniciar()
-            await conn.query(query, datos);
+            rows = await conn.query(query, datos);
+            this.id = rows.insertId;
         }
         catch(e)
         {

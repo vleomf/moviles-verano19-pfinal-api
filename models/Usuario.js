@@ -95,6 +95,7 @@ class Usuario
         }
         catch(e)
         {
+            // console.log(e)
             switch(e.code)
             {
                 case 'ECONNREFUSED' : return [{

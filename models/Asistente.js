@@ -95,11 +95,12 @@ class Asistente
 
         let query = 'INSERT INTO asistentes SET usuario = ?, curso = ?';
         let datos = [this.usuario, this.curso];
-        let conn;
+        let conn, rows;
         try
         {
             conn = await db.Iniciar();
-            await conn.query(query, datos);
+            rows = await conn.query(query, datos);
+            this.id = rows.insertId;
         }
         catch(e)
         {

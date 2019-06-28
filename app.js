@@ -7,8 +7,11 @@ var logger = require('morgan');
 var indexRouter = require('./routes/index');
 var usersRouter = require('./routes/usuarios');
 var cursosRouter = require('./routes/cursos');
-var salonesRouter = require('./routes/salones');
-var horariosRouter = require('./routes/horarios');
+
+// var salonesRouter = require('./routes/salones');
+// var horariosRouter = require('./routes/horarios');
+
+var AccesoMiddleware = require('./middlewares/Acceso');
 
 var app = express();
 
@@ -23,10 +26,9 @@ app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 
 app.use('/', indexRouter);
-app.use('/usuarios', usersRouter);
-app.use('/cursos', cursosRouter);
-app.use('/salones', salonesRouter);
-app.use('/horarios', horariosRouter);
+app.use('/usuarios', AccesoMiddleware.Autorizar, usersRouter);
+app.use('/cursos',   AccesoMiddleware.Autorizar ,cursosRouter);
+
 
 
 // catch 404 and forward to error handler

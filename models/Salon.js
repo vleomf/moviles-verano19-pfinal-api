@@ -19,7 +19,7 @@ class Salon
     {
         let query  = 'SELECT id, codigo, edificio,';
             query += 'facultad, institucion, latitud, longitud';
-            query += 'FROM salones';
+            query += 'FROM salones ORDER BY institucion, facultad';
         
             let conn
             let rows;
@@ -61,7 +61,7 @@ class Salon
     {
         let query  = 'SELECT id, codigo, edificio,';
             query += 'facultad, institucion, latitud, longitud';
-            query += 'FROM salones WHERE id = ?';
+            query += 'FROM salones WHERE id = ? ORDER BY institucion, facultad';
 
         let conn;
         let rows;
@@ -97,7 +97,7 @@ class Salon
 
     async Crear()
     {
-        if( !this.curso || !this.codigo || !this.edificio || !this.facultad ||
+        if( !this.codigo || !this.edificio || !this.facultad ||
             !this.institucion) return [{
                 codigo: 'U-1000',
                 tipo: 'U',
@@ -121,11 +121,12 @@ class Salon
         let datos = [ this.codigo, this.edificio, this.facultad,
         this.institucion, this.latitud, this.longitud].filter(Boolean);
 
-        let conn;
+        let conn, rows;
         try
         {
             conn = await db.Iniciar();
-            await conn.query(query, datos);
+            rows = await conn.query(query, datos);
+            this.id = rows.insertId;
         }
         catch(e)
         {

@@ -100,11 +100,12 @@ class Horario
         let query = 'INSERT INTO horarios SET curso = ?, salon = ?, dia = ?, hora = ?';
         let datos = [this.curso, this.salon, this.dia, this.hora];
 
-        let conn;
+        let conn, rows;
         try
         {
             conn = await db.Iniciar();
-            await conn.query(query, datos);
+            rows = await conn.query(query, datos);
+            this.id = rows.insertId;
         }
         catch(e)
         {

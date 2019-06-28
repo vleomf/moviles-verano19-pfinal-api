@@ -68,11 +68,7 @@ class Usuario
         {
             conn = await db.Iniciar();
             rows = await conn.query(query, [id]);
-            if(!rows.length) return [{
-                codigo: 'U-1000',
-                tipo:   'U',
-                ofensa: false
-            }, null];
+            if(!rows.length) return [false, null];
         }
         catch(e)
         {
@@ -90,10 +86,38 @@ class Usuario
         return [false , new Usuario(cc(rows[0])) ];
     }
 
+    static async ObtenerPorCorreo(correoElectronico)
+    {
+        let query  = 'SELECT id, matricula, ap_paterno, ap_materno, nombre,';
+            query += 'correo_electronico, fotografia, rol FROM usuarios WHERE correo_electronico = ?';
+
+        let conn, rows;
+        try
+        {
+            conn = await db.Iniciar();
+            rows = await conn.query(query, [correoElectronico]);
+            if(!rows.length) return[false, null];
+        }
+        catch(e)
+        {
+            switch(e.code)
+            {
+                case 'ECONNREFUSED' : return ['N-1000', null];
+                default             : return ['E-1000', null];
+            }
+        }
+        finally
+        {
+            if(conn) conn.end();
+        }
+
+        return [false, new Usuario(cc(rows[0]))] ;
+    }
+
     async Crear()
     {
         if( !this.matricula || !this.apPaterno || !this.apMaterno || !this.nombre ||
-            !this.correoElectronico || !this.rol ) return {
+            !this.correoElectronico || !this.rol ) return [{
                 codigo: 'U-1000',
                 tipo:   'U',
                 ofensa: {
@@ -107,7 +131,7 @@ class Usuario
                     },
                     opcionales: ['fotografia', 'password']
                 }
-            };
+            }, null];
 
         let query  = 'INSERT INTO usuarios SET matricula = ?, ap_paterno = ?, ap_materno = ?,';
             query += 'nombre = ?, correo_electronico = ?, rol = ?,';
@@ -132,23 +156,23 @@ class Usuario
         {
             switch(e.code)
             {
-                case 'ECONNREFUSED' : return {
+                case 'ECONNREFUSED' : return [{
                     codigo: 'N-1000',
                     tipo:   'N',
                     ofensa: false
-                };
-                default: return {
+                }, null];
+                default: return [{
                     codigo: 'E-1000',
                     tipo:   'E',
                     ofensa: false
-                };
+                }, null];
             }
         }
         finally
         {
             if(conn) conn.end();
         }
-        return false;
+        return [false, null];
     }
 
     async Actualizar()
@@ -174,16 +198,16 @@ class Usuario
             this.matricula,         this.apPaterno, this.apMaterno, this.nombre,
             this.correoElectronico, this.rol,       this.password,  this.fotografia].filter(Boolean);
 
-        if(!datos.length) return {
+        if(!datos.length) return [{
             codigo: 'U-1000',
             tipo:   'U',
             ofensa: {
                 enviados: 0,
                 disponibles: Object.keys(this).filter(el => { return el != 'id' ? el : undefined })
             }
-        };
+        }, null];
 
-        datos.push(this.id); // primer  query
+        datos.push(this.id);
         
         let conn;
         try
@@ -206,23 +230,23 @@ class Usuario
             console.log(e);
             switch(e.code)
             {
-                case 'ECONNREFUSED' : return {
+                case 'ECONNREFUSED' : return [{
                     codigo: 'N-1000',
                     tipo:   'N',
                     ofensa:  false
-                };
-                default : return {
+                }, null];
+                default : return [{
                     codigo: 'E-1000',
                     tipo:   'E',
                     ofensa: false
-                };
+                }, null];
             }
         }
         finally
         {
             if(conn) conn.end();
         }
-        return false;
+        return [false, null];
     }
 
     async Eliminar()
@@ -237,26 +261,25 @@ class Usuario
         }
         catch(e)
         {
-            console.log(e);
             switch(e.code)
             {
-                case 'ECONNREFUSED' : return {
+                case 'ECONNREFUSED' : return [{
                     codigo: 'N-1000',
                     tipo:   'N',
                     ofensa: false
-                }
-                default : return {
+                }, null]
+                default : return [{
                     codigo: 'E-1000',
                     tipo:   'E',
                     ofensa: false
-                }
+                }, null]
             }
         }
         finally
         {
             if(conn) conn.end();
         }
-        return false;
+        return [false, null];
     }
 
     async EncriptarPassword()

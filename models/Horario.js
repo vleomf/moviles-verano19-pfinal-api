@@ -13,7 +13,7 @@ class Horario
         this.hora  = h.hora;
     }
 
-    async ObtenerTodos()
+    static async ObtenerTodos()
     {
         let query  = 'SELECT id, curso, salon, dia, hora FROM horarios';
         let rows, conn;
@@ -26,8 +26,16 @@ class Horario
         {
             switch(e.code)
             {
-                case 'ECONNREFUSED' : return ['N-1000', {}];
-                default             : return ['E-1000', {}];
+                case 'ECONNREFUSED' : return [{
+                    codigo: 'N-1000',
+                    tipo: 'N',
+                    ofensa: false
+                }, null];
+                default : return [{
+                    codigo: 'E-1000',
+                    tipo: 'E',
+                    ofensa: false
+                }, null];
             }
         }
         finally
@@ -41,7 +49,7 @@ class Horario
         return [false, horarios];
     }
 
-    async Obtener(id)
+    static async Obtener(id)
     {
         let query  = 'SELECT id, curso, salon, dia, hora FROM horarios WHERE id = ?';
         let rows, conn;
@@ -49,30 +57,45 @@ class Horario
         {
             conn = await db.Iniciar();
             rows = await conn.query(query, [id]);
+            if(!rows.length) return [false, null];
         }
         catch(e)
         {
             switch(e.code)
             {
-                case 'ECONNREFUSED' : return ['N-1000', {}];
-                default             : return ['E-1000', {}];
+                case 'ECONNREFUSED' : return [{
+                    codigo: 'N-1000',
+                    tipo: 'N',
+                    ofensa: false
+                }, null];
+                default : return [{
+                    codigo: 'E-1000',
+                    tipo: 'E',
+                    ofensa: false
+                }, null];
             }
         }
         finally
         {
             if(conn) conn.end();
         }
-        return [false, rows[0] ? new Horario(cc(rows[0])) : {}];
+        return [false, new Horario(cc(rows[0]))];
     }
 
     async Crear()
     {
-        if(!this.curso || !this.dia || !this.hora) return ['U-1000', {
-            curso: this.curso ? 'ok' : 'requerido',
-            salon: this.salon ? 'ok' : 'requerido',
-            dia:   this.dia   ? 'ok' : 'requerido',
-            hora:  this.hora  ? 'ok' : 'requerido'
-        }];
+        if(!this.curso || !this.dia || !this.hora) return [{
+            codigo: 'U-1000',
+            tipo: 'U',
+            ofensa: {
+                requeridos: {
+                    curso: this.curso ? true : false,
+                    salon: this.salon ? true : false,
+                    dia:   this.dia   ? true : false,
+                    hora:  this.hora  ? true : false
+                }
+            }
+        }, null];
 
         let query = 'INSERT INTO horarios SET curso = ?, salon = ?, dia = ?, hora = ?';
         let datos = [this.curso, this.salon, this.dia, this.hora];
@@ -87,18 +110,26 @@ class Horario
         {
             switch(e.code)
             {
-                case 'ECONNREFUSED' : return ['N-1000', {}];
-                default             : return ['E-1000', {}];
+                case 'ECONNREFUSED' : return [{
+                    codigo: 'N-1000',
+                    tipo: 'N',
+                    ofensa: false
+                }, null];
+                default : return [{
+                    codigo: 'E-1000',
+                    tipo: 'E',
+                    ofensa: false
+                }, null];
             }
         }
         finally
         {
             if(conn) conn.end();
         }
-        return [false, this];
+        return [false, null];
     }
 
-    async Actualizar(id)
+    async Actualizar()
     {
         let query  = 'UPDATE horarios SET ';
             query += this.curso ? 'curso = ?,' : '';
@@ -107,56 +138,87 @@ class Horario
             query += this.hora  ? 'hora  = ?,' : '';
             query  = query.substring(0, query.length - 1);
             query += ' WHERE id = ?';
+
+        let query2 = 'SELECT id, curso, salon, dia, hora FROM horarios WHERE id = ?';
         
-        let datos = [this.curso, this.dia, this.hora].filter(Boolean);
-        if(!datos.length) return ['U-1000', {
-            enviados: 0,
-            disponibles: Object.keys(this).filter( e => { return e != 'id' ? e : undefined })
-        }];
+        let datos = [this.curso, this.salon, this.dia, this.hora].filter(Boolean);
+
+        if(!datos.length) return [{
+            codigo: 'U-1000',
+            tipo: 'U',
+            ofensa: {
+                enviados: 0,
+                disponibles: Object.keys(this).filter( e => { return e != 'id' ? e : undefined })
+            }
+        }, null];
+
+        datos.push(this.id);
 
         let conn;
         try
         {
             conn = await db.Iniciar();
             await conn.query(query, datos);
+            
+            const datosActualizados = await conn.query(query2, this.id);
+            this.curso = datosActualizados[0]['curso'];
+            this.salon = datosActualizados[0]['salon'];
+            this.dia   = datosActualizados[0]['dia'];
+            this.hora  = datosActualizados[0]['hora'];
         }
         catch(e)
         {
             switch(e.code)
             {
-                case 'ECONNREFUSED' : return ['N-1000', {}];
-                default             : return ['E-1000', {}];
+                case 'ECONNREFUSED' : return [{
+                    codigo: 'N-1000',
+                    tipo: 'N',
+                    ofensa: false
+                }, null];
+                default : return [{
+                    codigo: 'E-1000',
+                    tipo: 'E',
+                    ofensa: false
+                }, null];
             }
         }
         finally
         {
             if(conn) conn.end();
         }
-        return [false, this];
+        return [false, null];
     }
 
-    async Eliminar(id)
+    async Eliminar()
     {
         const query = 'DELETE from horarios WHERE id = ?';
         let conn;
         try
         {
             conn = await db.Iniciar();
-            await conn.query(query, [id]);
+            await conn.query(query, this.id);
         }
         catch(e)
         {
             switch(e.code)
             {
-                case 'ECONNREFUSED' : return ['N-1000', {}];
-                default             : return ['E-1000', {}];
+                case 'ECONNREFUSED' : return [{
+                    codigo: 'N-1000',
+                    tipo: 'N',
+                    ofensa: false
+                }, null];
+                default  : return [{
+                    codigo: 'E-1000',
+                    tipo: 'E',
+                    ofensa: false
+                }, null];
             }
         }
         finally
         {
             if(conn) conn.end();
         }
-        return [false, {}];
+        return [false, null];
     }
 }
 

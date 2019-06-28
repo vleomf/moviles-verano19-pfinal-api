@@ -13,7 +13,7 @@ class Curso
         this.fin = c.fin;
     }
 
-    async ObtenerTodos()
+    static async ObtenerTodos()
     {
         const query  = 'SELECT id, matricula, nombre, inicio, fin FROM cursos';
 
@@ -28,8 +28,16 @@ class Curso
         {
             switch(e.code)
             {
-                case 'ECONNREFUSED' : return ['N-1000', {}];
-                default             : return ['E-1000', {}];
+                case 'ECONNREFUSED' : return [{
+                    codigo: 'N-1000',
+                    tipo: 'N',
+                    ofensa: false
+                }, null];
+                default : return [{
+                    codigo: 'E-1000',
+                    tipo: 'N',
+                    ofensa: false
+                }, null];
             }
         }
         finally
@@ -45,7 +53,7 @@ class Curso
         return [false, cursos];
     }
 
-    async Obtener(id)
+    static async Obtener(id)
     {
         let query  = "SELECT id, matricula, nombre, inicio, fin FROM cursos";
             query += " WHERE id = ?";
@@ -55,31 +63,46 @@ class Curso
         try
         {
             conn = await db.Iniciar();
-            rows = await conn.query(query, [id]);           
+            rows = await conn.query(query, id);    
+            if(!rows.length) return [false, null];   
         }
         catch(e)
         {
             switch(e.code)
             {
-                case 'ECONNREFUSED' : return ['N-1000', {}];
-                default             : return ['E-1000', {}];
+                case 'ECONNREFUSED' : return [{
+                    codigo: 'N-1000',
+                    tipo: 'N',
+                    ofensa: false
+                }, null];
+                default : return [{
+                    codigo: 'E-1000',
+                    tipo: 'E',
+                    ofensa: false
+                }, null];
             }
         }
         finally
         {
             if(conn) conn.end();
         }
-        return [false, rows[0] ? new Curso(cc(rows[0])) : {}];
+        return [false, new Curso(cc(rows[0]))];
     }
 
     async Crear()
     {
-        if(!this.matricula || !this.nombre || !this.inicio || !this.fin) return ['U-1000',{
-            matricula: this.matricula ? 'ok' : 'requerido',
-            nombre:    this.nombre    ? 'ok' : 'requerido',
-            inicio:    this.inicio    ? 'ok' : 'requerido',
-            fin:       this.fin       ? 'ok' : 'requerido'
-        }];
+        if(!this.matricula || !this.nombre || !this.inicio || !this.fin) return [{
+            codigo: 'U-1000',
+            tipo: 'U',
+            ofensa: {
+                requeridos: {
+                    matricula: this.matricula ? true : false,
+                    nombre:    this.nombre    ? true : false,
+                    inicio:    this.inicio    ? true : false,
+                    fin:       this.fin       ? true : false
+                }
+            }
+        }, null];
 
         let query = 'INSERT INTO cursos SET matricula = ?, nombre = ?, inicio = ?, fin = ?';
         let datos = [ this.matricula, this.nombre, this.inicio, this.fin ];
@@ -94,8 +117,16 @@ class Curso
         {
             switch(e.code)
             {
-                case 'ECONNREFUSED' : return ['N-1000', {}];
-                default             : return ['E-1000', {}];
+                case 'ECONNREFUSED' : return [{
+                    codigo: 'N-1000',
+                    tipo: 'N',
+                    ofensa: false
+                }, null];
+                default : return [{
+                    codigo: 'E-1000',
+                    tipo: 'E',
+                    ofensa: false
+                }, null];
             }
         }
         finally
@@ -106,7 +137,7 @@ class Curso
         return [false, this];
     }   
 
-    async Actualizar(id)
+    async Actualizar()
     {
         let query  = 'UPDATE cursos SET ';
             query += this.matricula ? 'matricula = ?,' : '';
@@ -115,26 +146,48 @@ class Curso
             query += this.fin       ? 'fin       = ?,' : '';
             query  = query.substring(0, query.length - 1);
             query += ' WHERE id = ?';
+
+        let quer2  = 'SELECT id, matricula, nombre, inicio, fin FROM cursos WHERE id = ?';
         
         let datos = [ this.matricula, this.nombre, this.inicio, this.fin].filter(Boolean);
-        if(!datos.length) return ['U-1000', {
-            enviados: 0,
-            disponibles: Object.keys(this).filter(el => { return el != 'id' ? el : undefined })
-        }];
-        datos.push(id);
+        
+        if(!datos.length) return [{
+            codigo: 'U-1000',
+            tipo: 'U',
+            ofensa: {
+                enviados: 0,
+                disponibles: Object.keys(this).filter( el => { return el != 'id' ? el : undefined })
+            }
+        }, null];
+
+        datos.push(this.id);
         
         let conn;
         try
         {
             conn =  await db.Iniciar();
             await conn.query(query, datos);
+
+            const datosActualizados = await conn.query(quer2, this.id);
+            this.matricula = datosActualizados[0]['matricula'];
+            this.nombre    = datosActualizados[0]['nombre'];
+            this.inicio    = datosActualizados[0]['inicio'];
+            this.fin       = datosActualizados[0]['fin'];
         }
         catch(e)
         {
             switch(e.code)
             {
-                case 'ECONNREFUSED' : return ['N-1000', {}];
-                default             : return ['E-1000', {}];
+                case 'ECONNREFUSED' : return [{
+                    codigo: 'N-1000',
+                    tipo: 'N',
+                    ofensa: false
+                }, null];
+                default : return [{
+                    codigo: 'E-1000',
+                    tipo: 'E',
+                    ofensa: false
+                }, null];
             }
         }
         finally
@@ -142,10 +195,10 @@ class Curso
             if(conn) conn.end();
         }
 
-        return [false, this];
+        return [false, null];
     }
 
-    async Eliminar(id)
+    async Eliminar()
     {
         const query = 'DELETE FROM cursos WHERE id = ?';
 
@@ -153,14 +206,22 @@ class Curso
         try
         {
             conn = await db.Iniciar();
-            await conn.query(query, [id]);
+            await conn.query(query, this.id);
         }
         catch(e)
         {
             switch(e.code)
             {
-                case 'ECONNREFUSED' : return ['N-1000', {}];
-                default             : return ['E-1000', {}];
+                case 'ECONNREFUSED' : return [{
+                    codigo: 'N-1000',
+                    tipo: 'N',
+                    ofensa: false
+                }, null];
+                default : return [{
+                    codigo: 'E-1000',
+                    tipo: 'E',
+                    ofensa: false
+                }, null];
             }
         }
         finally
@@ -168,7 +229,7 @@ class Curso
             if(conn) conn.end();
         }
 
-        return[false, {}];
+        return[false, null];
     }
 }
 

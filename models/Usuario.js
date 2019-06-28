@@ -2,8 +2,31 @@ const db = require('../db');
 const cc = require('camelcase-keys');
 const bcrypt = require('bcrypt');
 
+/**
+ * Def. clase Usuario
+ * @type  {Usuario}
+ * @requires
+ * @param {string} matricula            Matricula de usuario
+ * @param {string} apPaterno            Apellido paterno de usuario
+ * @param {string} apMaterno            Apellido materno de usuario
+ * @param {string} nombre               Nombre de usuario
+ * @param {string} correoElectronico    Correo Electronico de usuario
+ * @param {Rol}    rol                  Rol de usuario
+ * @param {string} password             Contraseña de usuario
+ * 
+ * @optionals
+ * @param {string} fotografia           Url de fotografia de usuario
+ * 
+ * Def. enum Rol
+ * @enum  {Rol}
+ * @valores 
+ *  {string} estudiante
+ *  {string} profesor 
+ */
+
 class Usuario
 {
+
     constructor(u)
     {
         if(!u) return;
@@ -21,7 +44,7 @@ class Usuario
     static async ObtenerTodos()
     {
         let query  = 'SELECT id, matricula, ap_paterno, ap_materno, nombre,';
-            query += 'correo_electronico, fotografia, rol FROM usuarios'; 
+            query += 'correo_electronico, fotografia, rol, password FROM usuarios'; 
 
         let conn, rows;
         try
@@ -61,7 +84,7 @@ class Usuario
     static async Obtener(id)
     {
         let query  = 'SELECT id, matricula, ap_paterno, ap_materno, nombre,';
-            query += 'correo_electronico, fotografia, rol FROM usuarios WHERE id = ?';
+            query += 'correo_electronico, fotografia, rol, password FROM usuarios WHERE id = ?';
 
         let conn, rows;
         try
@@ -74,8 +97,16 @@ class Usuario
         {
             switch(e.code)
             {
-                case 'ECONNREFUSED' : return ['N-1000', null];
-                default             : return ['E-1000', null];
+                case 'ECONNREFUSED' : return [{
+                    codigo: 'N-1000',
+                    tipo: 'N',
+                    ofensa: false
+                }, null];
+                default : return [{
+                    codigo: 'E-1000',
+                    tipo: 'E',
+                    ofensa: false
+                }, null];
             }
         }
         finally
@@ -88,7 +119,7 @@ class Usuario
 
     static async ObtenerPorCorreo(correoElectronico)
     {
-        let query  = 'SELECT id, matricula, ap_paterno, ap_materno, nombre,';
+        let query  = 'SELECT id, matricula, ap_paterno, ap_materno, nombre, password,';
             query += 'correo_electronico, fotografia, rol FROM usuarios WHERE correo_electronico = ?';
 
         let conn, rows;
@@ -102,8 +133,16 @@ class Usuario
         {
             switch(e.code)
             {
-                case 'ECONNREFUSED' : return ['N-1000', null];
-                default             : return ['E-1000', null];
+                case 'ECONNREFUSED' : return [{
+                    codigo: 'N-1000',
+                    tipo: 'N',
+                    ofensa: false
+                }, null];
+                default : return [{
+                    codigo: 'E-1000',
+                    tipo: 'E',
+                    ofensa: false
+                }, null];
             }
         }
         finally
@@ -114,10 +153,47 @@ class Usuario
         return [false, new Usuario(cc(rows[0]))] ;
     }
 
+    static async ObtenerPorMatricula(matricula)
+    {
+        let query  = 'SELECT id, matricula, ap_paterno, ap_materno, nombre, password,';
+            query += 'correo_electronico, fotografia, rol FROM usuarios WHERE matricula = ?'; 
+
+        let conn, rows;
+        try
+        {
+            conn = await db.Iniciar();
+            rows = await conn.query(query, matricula);
+            if(!rows.length) return [false, null];
+        }
+        catch(e)
+        {
+            console.log(e);
+            switch(e.code)
+            {
+                case 'ECONNREFUSED' : return [{
+                    codigo: 'N-1000',
+                    tipo: 'N',
+                    ofensa: false
+                }, null];
+                default : return [{
+                    codigo: 'E-1000',
+                    tipo: 'E',
+                    ofensa: false
+                }, null];
+            }
+        }
+        finally
+        {
+            if(conn) conn.end();
+        }
+
+        return[false, new Usuario(cc(rows[0]))];
+    }
+
     async Crear()
     {
         if( !this.matricula || !this.apPaterno || !this.apMaterno || !this.nombre ||
-            !this.correoElectronico || !this.rol ) return [{
+            !this.correoElectronico || !this.rol || !this.password) return [{
                 codigo: 'U-1000',
                 tipo:   'U',
                 ofensa: {
@@ -127,16 +203,16 @@ class Usuario
                         apMaterno: this.apMaterno ? true : false,
                         nombre   : this.nombre    ? true : false,
                         correoElectronico : this.correoElectronico ? true : false,
-                        rol: this.rol ? true : false
+                        rol: this.rol ? true : false,
+                        password: this.password ? true : false
                     },
-                    opcionales: ['fotografia', 'password']
+                    opcionales: ['fotografia']
                 }
             }, null];
 
         let query  = 'INSERT INTO usuarios SET matricula = ?, ap_paterno = ?, ap_materno = ?,';
-            query += 'nombre = ?, correo_electronico = ?, rol = ?,';
+            query += 'nombre = ?, correo_electronico = ?, rol = ?, password = ?,';
             query += this.fotografia ? 'fotografia = ?,' : '';
-            query += this.password   ? 'password   = ?,' : '';
             query  = query.substring(0, query.length - 1);
         
         this.EncriptarPassword();
@@ -146,14 +222,16 @@ class Usuario
             this.password,  this.fotografia
         ].filter(Boolean);
 
-        let conn;
+        let conn, rows;
         try
         {
             conn = await db.Iniciar();
-            await conn.query(query, datos);
+            rows = await conn.query(query, datos);
+            this.id = rows.insertId;
         }
         catch(e)
         {
+            console.log(e);
             switch(e.code)
             {
                 case 'ECONNREFUSED' : return [{

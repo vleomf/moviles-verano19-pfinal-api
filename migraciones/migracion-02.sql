@@ -1,4 +1,6 @@
-CREATE TABLE errores(
-    codigo varchar(10) PRIMARY KEY NOT NULL,
-    descripcion text NOT NULL
+CREATE TABLE tokens(
+    id  INT NOT NULL PRIMARY KEY,
+    fecha_creacion DATETIME NOT NULL,
+    expiracion     DATETIME NOT NULL,
+    token          TEXT NOT NULL
 );

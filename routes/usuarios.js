@@ -23,11 +23,15 @@ router.get('/', async (req, res) => {
 
 router.get('/:id', async(req, res) => {
   [error, usuario] = await Usuario.Obtener(req.params.id);
+  if(!usuario)
+  {
+    res.statusCode = 404;
+    return res.json();
+  }
   if(error)
   {
     switch(error.tipo)
     {
-      case 'U' : res.statusCode = 404; break;
       case 'E' : res.statusCode = 500; break;
       case 'N' : res.statusCode = 500; break;
     }
@@ -43,39 +47,6 @@ router.get('/:id', async(req, res) => {
   return res.send(usuario);
 });
 
-router.post('/', async (req, res) => {
-  let usuario = new Usuario(req.body);
-
-  error = await usuario.Crear();
-  if(error)
-  {
-    switch(error.tipo)
-    {
-      case 'U' : 
-        res.statusCode = 400; 
-        break;
-      case 'E' : 
-      case 'N' :
-        res.statusCode = 500;
-        break;
-    }
-    return res.json({
-      error: {
-        codigo: error.codigo,
-        objetivo: `${req.method} ${req.baseUrl}`,
-        cuerpo: req.body,
-        ofensa: error.ofensa
-      }
-    });
-  }
-
-  //  Ocultamos estos datos al publico
-  usuario.password   = undefined;
-  usuario.fotografia = undefined;
-  
-  res.statusCode = 201;  
-  return res.send(usuario);
-});
 
 router.patch('/:id', async(req, res) =>{
   let datosUs = req.body;
@@ -103,7 +74,7 @@ router.patch('/:id', async(req, res) =>{
   usuario.fotografia = datosUs.fotografia;
   usuario.correoElectronico = datosUs.correoElectronico;
   
-  error = await usuario.Actualizar();
+  [error, _] = await usuario.Actualizar();
   if(error)
   {
     switch(error.tipo)
@@ -152,7 +123,7 @@ router.delete('/:id', async(req, res) => {
     });
   }
 
-  error = await usuario.Eliminar();
+  [error, _] = await usuario.Eliminar();
   if(error)
   {
     res.statusCode = 500;

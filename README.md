@@ -10,7 +10,7 @@
     nombre:            string(100) requerido
     correoElectronico: string(100) requerido
   ```
-  **Respuestas HTTP**
+  > Respuestas HTTP
   ```yaml
     400: Bad Request (JSON mal formado)
     500: Error de Servidor

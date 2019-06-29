@@ -1,8 +1,7 @@
 # Proyecto Final (API)
 
 ---
-* Registrar nuevo usuario ***No requiere TOKEN***
-  
+  > Registrar nuevo usuario ***No requiere TOKEN***
   **POST /registrar**
   ```yaml
     matricula:         string(15)  requerido
@@ -18,4 +17,4 @@
     409: Conflicto (Usuario ya existe)
     201: Creado
   ```
-  ---
+---

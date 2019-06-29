@@ -15,7 +15,7 @@ class Asistente
     static async ObtenerPorCurso(idCurso)
     {
         //WHERE curso = ?
-        let query  = 'SELECT u.matricula, u.ap_paterno, u.ap_materno, u.nombre FROM asistentes AS a ';
+        let query  = 'SELECT a.id, u.matricula, u.ap_paterno, u.ap_materno, u.nombre FROM asistentes AS a ';
             query += 'INNER JOIN usuarios AS u ON a.usuario = u.id WHERE a.curso = ? AND u.rol != \'profesor\' ORDER BY u.rol'
         let conn, rows;
         try
@@ -53,8 +53,44 @@ class Asistente
     static async ObtenerUsuarioPorCurso(idCurso, idUsuario)
     {
         //WHERE curso = ?
-        let query  = 'SELECT u.ap_paterno, u.ap_materno, u.nombre, u.rol FROM asistentes AS a ';
+        let query  = 'SELECT a.id, u.ap_paterno, u.ap_materno, u.nombre, u.rol FROM asistentes AS a ';
             query += 'INNER JOIN usuarios AS u ON a.usuario = u.id WHERE a.curso = ? AND u.id = ? ORDER BY u.rol'
+        let conn, rows;
+        try
+        {
+            conn = await db.Iniciar();
+            rows = await conn.query(query, [idCurso, idUsuario]);
+            if(!rows.length) return [false, null];
+        }
+        catch(e)
+        {
+            switch(e.code)
+            {
+                case 'ECONNREFUSED' : return [{
+                    codigo: 'N-1000',
+                    tipo: 'N',
+                    ofensa: false
+                }, null];
+                default : return [{
+                    codigo: 'E-1000',
+                    tipo: 'E',
+                    ofensa: false
+                }, null];
+            }
+        }
+        finally
+        {
+            if(conn) conn.end();
+        }
+        return [false, new Usuario(cc(rows[0]))];
+    }
+
+    static async ObtenerAsistentePorCurso(idCurso, idUsuario)
+    {
+        //WHERE curso = ?
+        let query  = 'SELECT a.id, u.ap_paterno, u.ap_materno, u.nombre, u.rol FROM asistentes AS a ';
+            query += 'INNER JOIN usuarios AS u ON a.usuario = u.id WHERE a.curso = ? AND a.id = ? ';
+            query += ' AND u.rol != \'profesor\' ORDER BY u.rol'
         let conn, rows;
         try
         {

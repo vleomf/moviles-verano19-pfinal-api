@@ -7,12 +7,11 @@ var logger = require('morgan');
 var indexRouter = require('./routes/index');
 var usersRouter = require('./routes/usuarios');
 var cursosRouter = require('./routes/cursos');
+var catalogosRouter = require('./routes/catalogos');
 var actividadesCursoRouter = require('./routes/actividades');
 var asistentesCursoRouter = require('./routes/asistentes');
 var asistenciasCursoRouter = require('./routes/asistencias');
-
-// var salonesRouter = require('./routes/salones');
-// var horariosRouter = require('./routes/horarios');
+var salonesRouter = require('./routes/salones');
 
 var AccesoMiddleware = require('./middlewares/Acceso');
 
@@ -31,6 +30,8 @@ app.use(express.static(path.join(__dirname, 'public')));
 app.use('/', indexRouter);
 app.use('/usuarios', AccesoMiddleware.Autorizar, usersRouter);
 app.use('/cursos',   AccesoMiddleware.Autorizar ,cursosRouter);
+app.use('/salones',  AccesoMiddleware.Autorizar, salonesRouter);
+app.use('/catalogos', AccesoMiddleware.Autorizar, catalogosRouter);
 app.use('/cursos/:id/actividades', AccesoMiddleware.Autorizar, actividadesCursoRouter);
 app.use('/cursos/:id/asistentes' , AccesoMiddleware.Autorizar, asistentesCursoRouter);
 app.use('/cursos/:id/asistencias', AccesoMiddleware.Autorizar, asistenciasCursoRouter);

@@ -10,6 +10,20 @@ const Usuario   = require('../models/Usuario');
 const Jschema   = require('jsonschema').Validator;
 
 //  Obtener Asistentes de Curso
+//  NOTA: Solo un profesor tiene permiso de acceder a esta url
+/**
+ *  @url GET /cursos/:id/asistentes
+ *  @body null
+ *  @returns
+ *  [
+ *      {
+ *          matricula:
+ *          apPaterno:
+ *          apMaterno:
+ *          nombre:
+ *      }
+ *  ]
+ */
 router.get('/', Acceso.Profesor, async(req, res) => {
     const idCurso = req.params.id;
     [error, asistentes] = await Asistente.ObtenerPorCurso(idCurso);
@@ -30,6 +44,29 @@ router.get('/', Acceso.Profesor, async(req, res) => {
 });
 
 //  Registrar nuevo Asistente a Curso
+//  NOTA: Registra al usuario al que pertenece su token.
+/**
+ * @url POST /cursos/:id/asistentes
+ * @body null
+ * @returns
+ * {
+ *      usuario: {
+ *          id
+ *          matricula
+ *          apPaterno
+ *          apMaterno
+ *          nombre
+ *          correoElectronico
+ *          rol
+ *      },
+ *      curso: {
+ *          id
+ *          matricula
+ *          nombre
+ *          inicio
+ *          fin
+ *      }
+ */
 router.post('/', async(req, res) => {
     const idUsuario = res.locals.idUsuario;
     const idCurso = req.params.id;

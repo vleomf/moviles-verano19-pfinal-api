@@ -18,7 +18,7 @@ class Salon
     static async ObtenerTodos()
     {
         let query  = 'SELECT id, codigo, edificio,';
-            query += 'facultad, institucion, latitud, longitud';
+            query += 'facultad, institucion, latitud, longitud ';
             query += 'FROM salones ORDER BY institucion, facultad';
         
             let conn
@@ -30,6 +30,50 @@ class Salon
             }
             catch(e)
             {
+                console.log(e);
+                switch(e.code)
+                {
+                    case 'ECONNREFUSED' : return [{
+                        codigo: 'N-1000',
+                        tipo: 'N',
+                        ofensa: false
+                    }, null];
+                    default : return [{
+                        codigo: 'E-1000',
+                        tipo: 'E',
+                        ofensa: false
+                    }, null];
+                }
+            }
+            finally
+            {
+                if(conn) conn.end();
+            }
+
+        let salones = [];
+        rows.forEach( row => {
+            salones.push( new Salon( cc(row) ));
+        });
+
+        return [false, salones];
+    }
+
+    static async ObtenerTodosPorFacultad(facultad)
+    {
+        let query  = 'SELECT id, codigo, edificio,';
+            query += 'facultad, institucion, latitud, longitud ';
+            query += 'FROM salones WHERE facultad = ? ORDER BY institucion, facultad';
+        
+            let conn
+            let rows;
+            try
+            {
+                conn = await db.Iniciar();
+                rows = await conn.query(query, facultad);
+            }
+            catch(e)
+            {
+                console.log(e);
                 switch(e.code)
                 {
                     case 'ECONNREFUSED' : return [{

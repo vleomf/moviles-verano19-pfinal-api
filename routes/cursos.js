@@ -9,6 +9,9 @@ const Actividad = require('../models/Actividad');
 const Jschema   = require('jsonschema').Validator;
 
 // Obtener Todos los Cursos registrados
+/**
+ * @url GET /cursos
+ */
 router.get('/', async(req, res) => {
     [error, cursos] = await Curso.ObtenerTodos();
     if(err)
@@ -27,6 +30,9 @@ router.get('/', async(req, res) => {
 });
 
 //  Obtener curso por id
+/**
+ * @url GET /cursos/:id
+ */
 router.get('/:id', async(req, res) => {
     const id = req.params.id;
     if(!id)
@@ -91,6 +97,34 @@ router.get('/:id', async(req, res) => {
 });
 
 //  Crear un nuevo curso
+//  NOTA: Solo el rol profesor puede crear cursos
+/**
+ * @url POST /cursos/
+ * @body
+ * {
+ *      curso: {
+ *          matricula: < string(15)  requerido>
+ *          nombre:    < string(255) requerido>
+ *          inicio:    < date        requerido>
+ *          fin:       < date        requerido>
+ *      },
+ *      salon:{
+ *          id:        < salones.id>     NOTA: Si envias este parametro
+ *                                       el resto es ignorado y registra
+ *                                       el salon con este id
+ *          codigo:      < string(15)  requerido>
+ *          edificio:    < string(15)  requerido>
+ *          facultad:    < string(100) requerido>
+ *          institucion: < string(100) requerido>          
+ *      },
+ *      horarios: [
+ *          {
+ *              dia:     < enum("L","A","M","J","V","S","D") requerido>
+ *              hora>    < time requerido>
+ *          }
+ *      ]
+ * }
+ */
 router.post('/', Acceso.Profesor, async(req, res) => {
     const datosCurso    = req.body.curso;
     const datosSalon    = req.body.salon;
@@ -211,9 +245,6 @@ router.post('/', Acceso.Profesor, async(req, res) => {
             "curso": {
                 "$ref" : "/Curso"
             },
-            "salon": {
-                "$ref": "/Salon"
-            },
             "horarios": {
                 "$ref": "/Horarios"
             }
@@ -227,7 +258,11 @@ router.post('/', Acceso.Profesor, async(req, res) => {
     }
 
     validator.addSchema(datosCursoSchema, '/Curso');
-    validator.addSchema(datosSalonSchema, '/Salon');
+    if(!datosSalon.id)
+    {
+        validator.addSchema(datosSalonSchema, '/Salon');
+        datosSchema['properties']['salon'] = { "$ref": "/Salon" };
+    }
     validator.addSchema(datosHorariosSchema, '/Horario');
     validator.addSchema(datosHorariosSchemaArray, '/Horarios');
     validator.addSchema(datosSchema, '/PeticionCurso')
@@ -347,6 +382,31 @@ router.post('/', Acceso.Profesor, async(req, res) => {
 });
 
 //  Actualizar curso por id
+/**
+ * @url PATCH /cursos/:id
+ * @body
+ * {
+ *      curso: {
+ *          matricula: < string(15)  >
+ *          nombre:    < string(255) >
+ *          inicio:    < date        >
+ *          fin:       < date        >
+ *      },
+ *      salon:{
+ *          codigo:      < string(15)  >
+ *          edificio:    < string(15)  >
+ *          facultad:    < string(100) >
+ *          institucion: < string(100) >          
+ *      },
+ *      horarios: [
+ *          {
+ *              dia:     < enum("L","A","M","J","V","S","D") >
+ *              hora>    < time >
+ *          }
+ *      ]
+ * }
+ */
+
 router.patch('/:id', Acceso.Profesor, async(req, res) => {
     const idCurso      = req.params.id;
     const datosCurso   = req.body.curso;
@@ -472,6 +532,9 @@ router.patch('/:id', Acceso.Profesor, async(req, res) => {
 });
 
 //  Eliminar Curso por id
+/**
+ * @url DELETE /cursos/:id
+ */
 router.delete('/:id', Acceso.Profesor, async(req, res) => {
     const idCurso = req.params.id;
     [error, _] = await Horario.EliminarDeCurso(idCurso);

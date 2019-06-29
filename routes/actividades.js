@@ -9,6 +9,9 @@ const Actividad = require('../models/Actividad');
 const Jschema   = require('jsonschema').Validator;
 
 //  Obtener todas las actividades de un curso por id
+/**
+ * @url GET /cursos/:id/actividades
+ */
 router.get('/', async(req, res) => {
     const idCurso = req.params.id;
     console.log(req.params);
@@ -31,6 +34,15 @@ router.get('/', async(req, res) => {
 });
 
 //  Crear una nueva Actividad a un Curso por id
+/**
+ * @url POST /cursos/:id/actividades
+ * @body
+ * {
+ *      indice:      < string(10) requerido>
+ *      nombre:      < string(50) requerido>
+ *      descripcion: < text       requerido>
+ * }
+ */
 router.post('/', Acceso.Profesor, async(req, res) => {
     const idCurso = req.params.id;
     const datosActividad = req.body;
@@ -113,6 +125,15 @@ router.post('/', Acceso.Profesor, async(req, res) => {
 });
 
 //  Actualizar actividades asignada a un Curso por id
+/**
+ * @url PATCH /cursos/:idCurso/actividades/:idActividad
+ * @body
+ * {
+ *      indice:      < string(10) >
+ *      nombre:      < string(50) >
+ *      descripcion: < text       >
+ * }
+ */
 router.patch('/:idActividad', Acceso.Profesor, async(req, res) => {
     const idCurso = req.params.id;
     const idActividad = req.params.idActividad;

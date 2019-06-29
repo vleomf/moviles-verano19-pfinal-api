@@ -3,15 +3,20 @@ var router = express.Router();
 const Usuario = require('../models/Usuario');
 const Token   = require('../models/Token');
 
-/* GET home page. */
-// router.get('/', function(req, res, next) {
-//   res.render('index', { title: 'Express' });
-// });
-
 /**
- * @url /registrar
+ * @url POST /registrar
  * @requires
  * @param {Usuario} req.body  Datos de usuario
+ * @body
+ * {
+ *    matricula:          < varchar(15)  requerido>
+ *    apPaterno:          < varchar(50)  requerido>
+ *    apMaterno:          < varchar(50)  requerido>
+ *    nombre:             < varchar(100) requerido>
+ *    correoElectronico:  < varchar(100) requerido>
+ *    rol:                < enum("profesor", "estudiante") >
+ *    password:           < varchar(150) requerido>
+ * }
  */
 router.post('/registrar', async(req, res, next) => {
   const datosUsuario = req.body;
@@ -116,10 +121,15 @@ router.post('/registrar', async(req, res, next) => {
 });
 
 /**
- * @url /autorizar
+ * @url POST /autorizar
  * @requires
  * @param {matricula} req.body.correoElectronico  Correo de usuario
  * @param {password}  req.body.password           Constraseña de usuario
+ * @body
+ * {
+ *    correoElectronico: < varchar(100) requerido>
+ *    password:          < varchar(150) requerido>
+ * }
  */
 
 router.post('/autorizar', async(req, res, next) => {

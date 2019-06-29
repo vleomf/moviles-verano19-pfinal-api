@@ -4,6 +4,10 @@ const Usuario = require('../models/Usuario');
 const Acceso = require('../middlewares/Acceso');
 
 
+//  Obtener informacion de usuarios
+/**
+ * @url GET /usuarios
+ */
 router.get('/', async (req, res) => {
   [error, usuario] = await Usuario.ObtenerTodos();
   if(error)
@@ -22,6 +26,10 @@ router.get('/', async (req, res) => {
   return res.send(usuario);
 });
 
+//  Obtener informacion especifica de usuario por id
+/**
+ * @url GET /usuarios/:id
+ */
 router.get('/:id', async(req, res) => {
   [error, usuario] = await Usuario.Obtener(req.params.id);
   if(!usuario)
@@ -48,7 +56,22 @@ router.get('/:id', async(req, res) => {
   return res.send(usuario);
 });
 
-
+//  Actualizar informacion de usuario
+//  NOTA: Se permite actualizar si el id coincide con el 
+//  TOKEN enviado en la peticion.
+/**
+ * @url PATCH /usuarios/:id
+ * @body
+ * {
+ *    matricula:          < varchar(15) >
+ *    apPaterno:          < varchar(50) >
+ *    apMaterno:          < varchar(50) >
+ *    nombre:             < varchar(100)>
+ *    correoElectronico:  < varchar(100)>
+ *    rol:                < enum("profesor", "estudiante") >
+ *    password:           < varchar(150)>
+ * }
+ */
 router.patch('/:id', Acceso.InformacionPersonal ,async(req, res) =>{
   let datosUs = req.body;
 
@@ -103,6 +126,12 @@ router.patch('/:id', Acceso.InformacionPersonal ,async(req, res) =>{
   return res.send(usuario);
 });
 
+//  Borrar un usuario por ID
+//  NOTA: SOlo el usuario propietario puede eliminar su 
+//  cuenta. Se toma el id del TOKEN registrado ppor seguridad.
+/**
+ * @url DELETE /usuarios/:id
+ */
 router.delete('/:id', Acceso.InformacionPersonal, async(req, res) => {
   [error, usuario] = await Usuario.Obtener(req.params.id);
   if(error)

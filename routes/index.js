@@ -182,7 +182,8 @@ router.post('/autorizar', async(req, res, next) => {
     res.statusCode = 404;
     return res.json();
   }
-  if(!usuario.ValidarPassword(datosAcceso.password))
+  const esValido = await usuario.ValidarPassword(datosAcceso.password);
+  if(!esValido)
   {
     res.statusCode = 401;
     return res.json();

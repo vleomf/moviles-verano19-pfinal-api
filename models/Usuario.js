@@ -380,8 +380,9 @@ class Usuario
         }
     }
     async ValidarPassword(hashpass)
-    {
-       return bcrypt.compareSync(this.password, hashpass);
+    {   const esValido = bcrypt.compareSync(this.password, hashpass);
+        console.log(hashpass, esValido);
+        return false;
     }
 }
 

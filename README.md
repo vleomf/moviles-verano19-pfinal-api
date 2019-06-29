@@ -1,5 +1,7 @@
 # Proyecto Final (API)
 
+> TOKEN = 'x-api-key'
+
 ---
   ```yaml
     ##  Registrar nuevo usuario

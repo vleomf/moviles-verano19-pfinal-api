@@ -149,6 +149,9 @@
   ##  Enlistar todos los Cursos
   ##  GET /cursos
   
+  # Query
+  ?hoy  [true | false]
+  
   # Cabeceras
   x-api-token: TOKEN
   

@@ -135,7 +135,7 @@ router.post('/registrar', async(req, res, next) => {
 router.post('/autorizar', async(req, res, next) => {
   //  Obtenemos los datos de acceso y validamos
   const datosAcceso = req.body;
-
+  console.log(datosAcceso);
   if(!datosAcceso.correoElectronico || !datosAcceso.password)
   {
     res.statusCode = 400;
@@ -205,8 +205,10 @@ router.post('/autorizar', async(req, res, next) => {
       }
     });
   }
-
+  //  Ocultamos informacion sensible
+  usuario.password = undefined;
   res.json({
+    usuario: usuario,
     token: token
   });
 });

@@ -13,7 +13,8 @@ const Jschema   = require('jsonschema').Validator;
  * @url GET /cursos
  */
 router.get('/', async(req, res) => {
-    [error, cursos] = await Curso.ObtenerTodos();
+    const hoy = req.query.hoy;
+    [error, cursos] = hoy ? await Curso.ObtenerTodosHoy() : await Curso.ObtenerTodos();
     if(err)
     {
         res.statusCode = 500;

@@ -145,6 +145,7 @@ class Asistente
         }
         catch(e)
         {
+            console.log('asistente', e);
             switch(e.code)
             {
                 case 'ECONNREFUSED' : return [{

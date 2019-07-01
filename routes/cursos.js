@@ -130,6 +130,8 @@ router.post('/', Acceso.Profesor, async(req, res) => {
     const datosCurso    = req.body.curso;
     const datosSalon    = req.body.salon;
     const datosHorarios = req.body.horarios;
+
+    console.log(datosCurso, datosSalon, datosHorarios);
     
     /** !! INICIA  VALIDACION JSON **/
     if(!datosCurso || !datosSalon || !datosHorarios) return res.status(400).json({
@@ -268,6 +270,7 @@ router.post('/', Acceso.Profesor, async(req, res) => {
     validator.addSchema(datosHorariosSchemaArray, '/Horarios');
     validator.addSchema(datosSchema, '/PeticionCurso')
     const validacion = validator.validate(datosPeticion, datosSchema)
+
     if(validacion.errors.length)
     {
         res.statusCode = 400;
@@ -332,7 +335,7 @@ router.post('/', Acceso.Profesor, async(req, res) => {
 
     for(let i = 0; i < datosHorarios.length; i++)
     {
-        if(datosHorarios[i])
+        if(datosHorarios[i].hora != '')
         {
             let horario = new Horario(datosHorarios[i]);
             horario.curso = curso.id;
@@ -340,6 +343,7 @@ router.post('/', Acceso.Profesor, async(req, res) => {
             [error, _]  = await horario.Crear();
             if(error)
             {
+                console.log(error, horario);
                 switch(error.tipo)
                 {
                     case 'U' : res.statusCode = 400; break;
@@ -379,7 +383,7 @@ router.post('/', Acceso.Profesor, async(req, res) => {
     }
     
     res.statusCode = 201;
-    return res.send();
+    return res.send(true);
 });
 
 //  Actualizar curso por id

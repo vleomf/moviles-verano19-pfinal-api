@@ -55,7 +55,8 @@ router.get('/', Acceso.Profesor, async(req, res) => {
         [_, asistencia] = await Asistencia.ObtenerPorCursoAsistenteFecha(idCurso, asistentes[i].id, fechaActual);
         if(asistencia)
         {
-            asistentes[i].asistencia = {
+            asistentes[i].asistencia = true;
+            asistentes[i].datosAsistencia = {
                 id: asistencia[0].id,
                 fecha: asistencia[0].fecha
             }

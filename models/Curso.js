@@ -65,7 +65,7 @@ class Curso
         try
         {
             conn = await db.Iniciar();
-            rows = await conn.query(query, 'L');
+            rows = await conn.query(query, 'A');
         }
         catch(e)
         {
@@ -170,6 +170,7 @@ class Curso
         }
         catch(e)
         {
+            console.log('curso', e);
             switch(e.code)
             {
                 case 'ECONNREFUSED' : return [{

@@ -176,7 +176,7 @@ class Salon
         }
         catch(e)
         {
-            console.log(e);
+            console.log('salon', e);
             
             switch(e.code)
             {

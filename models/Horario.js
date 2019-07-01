@@ -146,6 +146,7 @@ class Horario
         }
         catch(e)
         {
+            console.log('horario', e);
             switch(e.code)
             {
                 case 'ECONNREFUSED' : return [{

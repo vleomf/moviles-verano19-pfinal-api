@@ -57,8 +57,8 @@ class Curso
     {
         const diaN = new Date().getDay();
         const diaS = diaN == 0 ? 'D' : diaN == 1 ? 'L' : diaN == 2 ? 'A' : diaN == 3 ? 'M' : diaN == 4 ? 'J' : diaN == 5 ? 'V' : diaN == 6 ? 'S' : ''; 
-        let query  = 'SELECT c.id, c.matricula, c.nombre, c.inicio, c.fin, h.hora, s.edificio, s.facultad, s.institucion FROM cursos AS c INNER JOIN ';
-            query += 'horarios as h ON h.curso = c.id INNER JOIN salones as s ON s.id = h.salon WHERE h.dia = ?'; 
+        let query  = 'SELECT c.id, c.matricula, c.nombre, c.inicio, c.fin, h.hora, s.edificio, s.codigo, s.facultad, s.institucion FROM cursos AS c INNER JOIN ';
+            query += 'horarios as h ON h.curso = c.id INNER JOIN salones as s ON s.id = h.salon WHERE h.dia = ? ORDER BY h.hora'; 
         
         let conn;
         let rows;
@@ -97,6 +97,7 @@ class Curso
             curso.inicio      = row['inicio'];
             curso.fin         = row['fin'];
             curso.hora        = row['hora'];
+	    curso.salon       = row['codigo'];
             curso.edificio    = row['edificio'];
             curso.facultad    = row['facultad'];
             curso.institucion = row['institucion'];

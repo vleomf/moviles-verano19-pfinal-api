@@ -9,6 +9,7 @@ const Asistencia = require('../models/Asistencia');
 const Actividad  = require('../models/Actividad');
 const Usuario    = require('../models/Usuario');
 const Jschema    = require('jsonschema').Validator;
+const moment     = require('moment');
 
 //  Obtener asistencias del Curso
 //  NOTA: Solo un profesor tiene permiso de aceder a esta url
@@ -17,7 +18,24 @@ const Jschema    = require('jsonschema').Validator;
  */
 router.get('/', Acceso.Profesor, async(req, res) => {
     const idCurso = req.params.id;
-    [error, listaAsistencia] = await Asistencia.ObtenerPorCurso(idCurso);
+    
+    // [error, listaAsistencia] = await Asistencia.ObtenerPorCurso(idCurso);
+    // if(error)
+    // {
+    //     res.statusCode = 500;
+    //     return res.json({
+    //         error: {
+    //             codigo: error.codigo,
+    //             objetivo: `${req.method} ${req.url}`,
+    //             cuerpo: req.body,
+    //             ofensa: error.ofensa
+    //         }
+    //     })
+    // }
+
+    // return res.json(listaAsistencia);
+
+    [error, asistentes] = await Asistente.ObtenerPorCurso(idCurso);
     if(error)
     {
         res.statusCode = 500;
@@ -29,9 +47,25 @@ router.get('/', Acceso.Profesor, async(req, res) => {
                 ofensa: error.ofensa
             }
         })
+    }    
+    let listaAsistencia = [];
+    const fechaActual   = moment().format('YYYY-MM-DD');
+    for(let i = 0; i < asistentes.length; i++)
+    {
+        [_, asistencia] = await Asistencia.ObtenerPorCursoAsistenteFecha(idCurso, asistentes[i].id, fechaActual);
+        if(asistencia)
+        {
+            asistentes[i].asistencia = {
+                id: asistencia[0].id,
+                fecha: asistencia[0].fecha
+            }
+        }
+        else
+        {
+            asistentes[i].asistencia = false;
+        }
     }
-
-    return res.json(listaAsistencia);
+    return res.json(asistentes);
 });
 
 //  Eliminar asistencia del Curso por ID
@@ -142,7 +176,35 @@ router.post('/', Acceso.Profesor, async(req, res) => {
         });
     }
 
-    let asistencia = new Asistencia(datosAsistencia);
+    let asistencia;
+    const fechaActual   = moment(datosAsistencia.fecha).format('YYYY-MM-DD');
+    [error, asistencia] = await Asistencia.ObtenerPorCursoAsistenteFecha(idCurso, datosAsistencia.asistente, fechaActual);
+    if(error)
+    {
+        res.statusCode = 500;
+        return res.json({
+            error: {
+                codigo: error.codigo,
+                objetivo: `${req.method} ${req.url}`,
+                cuerpo: req.body,
+                ofensa: error.ofensa
+            }
+        })
+    }
+    if(asistencia)
+    {
+        res.statusCode = 409;
+        return res.json({
+            error: {
+                codigo: 'U-1000',
+                objetivo: `${req.method} ${req.url}`,
+                cuerpo: req.body,
+                ofensa: `Asistente con id ${datosAsistencia.asistente} ya cuenta con registro del dia ${fechaActual}`
+            }
+        });
+    }
+
+    asistencia = new Asistencia(datosAsistencia);
     [error, _] = await asistencia.Crear();
     if(error)
     {

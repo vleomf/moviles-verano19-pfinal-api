@@ -65,7 +65,7 @@ class Curso
         try
         {
             conn = await db.Iniciar();
-            rows = await conn.query(query, 'A');
+            rows = await conn.query(query, diaS);
         }
         catch(e)
         {
